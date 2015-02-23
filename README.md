@@ -14,17 +14,18 @@ Dependencies
 
 ## Installing Dependencies on Ubuntu Linux 12.04
 ### 1. Installing PCAN Linux Driver
-    todo
+  todo
 ### 2. Installing PCAN-Basic API
-    todo
-    
+  todo
+
 Changelist
 ----------
 * 0.4 - Additional changes to higher level.
  * Adding more functionality in Higher BAD Level, with higher level functions for grasping and signal filtering.
  * Bug fixes
 * 0.3 - Adding the kinematics of the robot
-* 0.2 - Changing the layered structure of the program. The first tier (CANbus.cpp) is now independed from upper levels.
+* 0.2 - Changing the layered structure of the program. 
+ * The first tier (CANbus.cpp) is now independent from upper levels.
 * 0.1 - initial release
 
 
