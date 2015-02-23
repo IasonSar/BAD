@@ -14,9 +14,9 @@ Dependencies
 
 ## Installing Dependencies on Ubuntu Linux 12.04
 ### 1. Installing PCAN Linux Driver
-   todo
+    todo
 ### 2. Installing PCAN-Basic API
-   todo
+    todo
 
 Changelist
 ----------
