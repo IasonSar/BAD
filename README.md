@@ -4,6 +4,8 @@ About
 -----
 BAD (BarrettHand AUTh Driver) is a basic driver, that provides the necessary functionalities in order to control the robotic hand BarrettHand under Linux. This driver does not provide real time capabilites yet. BAD has been developed during a diploma thesis in Aristotle University of Thessaloniki (AUTh) and is open source software.
 
+Note that the driver implements a BHand having the Fingertip Torque Sensor option, but not the tactile sensors.
+
 Dependencies
 ------------
 - Required:
