@@ -2,11 +2,11 @@
 
 About
 -----
-BAD (BarrettHand AUTh Driver) is a basic driver, that provides the necessary functionalities in order to control the robotic hand BarrettHand under Linux. This driver does not provide real time capabilites yet. BAD has been developed during my diploma thesis in Aristotle University of Thessaloniki (AUTh) and is open source software.
+BAD (BarrettHand AUTh Driver) is a basic driver, that provides the necessary functionalities in order to control the robotic hand BarrettHand under Linux. This driver does not provide real time capabilites yet. BAD has been developed during a diploma thesis in Aristotle University of Thessaloniki (AUTh) and is open source software.
 
 Dependencies
 ------------
--Required:
+- Required:
  - PCAN Linux Driver (for Peak-Systems hardware)
  - PCAN-Basic API
 - Optional
@@ -14,7 +14,7 @@ Dependencies
 
 ## Installing Dependencies on Ubuntu Linux 12.04
 ### 1. Installing PCAN Linux Driver
-  todo
+      todo
 ### 2. Installing PCAN-Basic API
   todo
 
