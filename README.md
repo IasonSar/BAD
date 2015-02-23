@@ -23,6 +23,7 @@ Changelist
 * 0.4 - Additional changes to higher level.
  * Adding more functionality in Higher BAD Level, with higher level functions for grasping and signal filtering.
  * Bug fixes
+ * Additional executable that use 2 threads, 1 for the application and 1 for logging data to file.
 * 0.3 - Adding the kinematics of the robot
 * 0.2 - Changing the layered structure of the program. 
  * The first tier (CANbus.cpp) is now independent from upper levels.
