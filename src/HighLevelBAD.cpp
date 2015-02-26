@@ -749,7 +749,7 @@ void BAD::simpleCylinderGrasp()
     else
         open(HAND);
         
-        /** Read SG absence of force, and set velocity of the fingers */
+/** Read SG absence of force, and set velocity of the fingers */
 	int sg[3];
     for (int puck=FINGER1; puck<=FINGER3; puck++)
         hand->getProperty(puck, SG, &sg[puck-FINGER1]);

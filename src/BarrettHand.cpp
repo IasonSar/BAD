@@ -27,14 +27,15 @@
 
 BHand::BHand(CANbus* myBus, string myType, pthread_mutex_t* myMutex)
 {
+/** Initialize the basic member variables. */
     bus = myBus;
     type = myType;
     mutex = myMutex;
     initiliazed = false;
-    
     msg_type = "[Hand] ";
     err_type = "[Error] BHand::";
-    
+
+/** Check if the BHand type is a legitimate one. */
     if (type.compare("BH8-262") & type.compare("BH8-280") & type.compare("BH8-282"))
         printf("[BHand] Warning: The type of BarrettHand does not seem to be one of the following:\n"
                "        1. BH8-262\n"
@@ -42,7 +43,55 @@ BHand::BHand(CANbus* myBus, string myType, pthread_mutex_t* myMutex)
                "        3. BH8-282\n");
     
 }
+
 BHand::~BHand(){};
+
+int BHand::init() {
+    
+/** Initialize the CAN bus. */
+    bus->init();
+   
+/** Make sure the hand is connected and you can see all the pucks. */
+    int r[4] = {-1, -1, -1, -1};
+       
+    for (int puck=FINGER1; puck <= SPREAD; puck++) {
+        getProperty(puck, ROLE, &r[puck-FINGER1]);
+    }
+    
+    if (r[0]<0 || r[1]<0 || r[2]<0 || r[3]<0) {
+        cerr << err_type << __FUNCTION__ << ": Some pucks have not been found. You either need to\n" \
+             << "connect and turn on the BarrettHand, or to contact the Barrett support." << endl;
+        return MD_ERROR_FAIL;
+    }
+   
+/** The first time the hand is initialized, ask for pressing the ENTER, as 
+	a safety feature. */
+    if (!initiliazed) {
+        printf("[BHand] Initializing the hand...\n");
+        //bus->reset();
+        
+        cout << msg_type << "The hand is about to initiliaze." << endl;
+        cout << "\033[1;31mPlease be sure the hand is in safe position.\033[0m\n";
+        cout << "\033[1;31mPress ENTER when you are ready...\033[0m\n";
+        cin.ignore();
+    }
+
+/**  */
+    int puck;
+    for (puck=FINGER1; puck<=SPREAD; puck++) {
+        setProperty(puck, STAT, STATUS_READY);
+        usleep(750*1000); 
+        setProperty(puck, CMD, CMD_HI);    
+        usleep(3*1000000);
+    }
+    
+    usleep(1*1000000);
+    
+    setProperty(SPREAD, MODE, MODE_IDLE);   
+    
+    initiliazed = true;
+    return MD_ERROR_OK;
+}
 
 int BHand::setProperty(int node, int property, int value)
 {   
@@ -343,90 +392,6 @@ int BHand::getDualPackedPosition(int node, int* pos, int* jpos)
 } 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-int BHand::getPosition(int node, int *value1, *value2)
-{
-	
-}
-*/
-
-
-int BHand::init() {
-    
-    bus->init();
-   
-    //make sure the hand is connected and you see the pucks   
-    int r[4] = {-1, -1, -1, -1};
-   
-    for (int puck=FINGER1; puck <= SPREAD; puck++) {
-        getProperty(puck, ROLE, &r[puck-FINGER1]);
-    }
-    
-    if (r[0]<0 || r[1]<0 || r[2]<0 || r[3]<0) {
-        cerr << err_type << __FUNCTION__ << ": Some pucks have not been found. You either need to\n" \
-             << "connect and turn on the BarrettHand, or to contact the Barrett support." << endl;
-        return MD_ERROR_FAIL;
-    }
-   
-   // The first time the hand is initialized ask for pressing the ENTER
-    if (!initiliazed) {
-        printf("[BHand] Initializing the hand...\n");
-        //bus->reset();
-        
-        cout << msg_type << "The hand is about to initiliaze." << endl;
-        cout << "\033[1;31mPlease be sure the hand is in safe position.\033[0m\n";
-        cout << "\033[1;31mPress ENTER when you are ready...\033[0m\n";
-        cin.ignore();
-    }
-    
-    int puck;
-    for (puck=FINGER1; puck<=SPREAD; puck++) {
-        //cerr << err_type << __FUNCTION__ <<  "puck = " << puck << endl;
-        setProperty(puck, STAT, STATUS_READY);
-        usleep(750*1000); 
-        setProperty(puck, CMD, CMD_HI);    
-        usleep(3*1000000);
-    }
-    
-    usleep(1*1000000);
-    
-    setProperty(SPREAD, MODE, MODE_IDLE);   
-    
-    initiliazed = true;
-    return MD_ERROR_OK;
-}
-
-int BHand::init2()
-{
-	bus->init();
-	
-	int puck;
-    for (puck=FINGER1; puck<=SPREAD; puck++)
-        setProperty(puck, STAT, STATUS_READY);
-}
-
-
-// Initialize the values of the most properties to their defaults
 int BHand::initPropValues()
 {
     usleep(100*1000);
@@ -452,17 +417,15 @@ int BHand::initPropValues()
     return MD_ERROR_OK;
 }
 
+
 int BHand::close() 
 {
-    cout << msg_type << "Closing the whole hand. Please remove obstacles." << endl;
-    
-    usleep(1*1000000); 
-    
+    cout << msg_type << "Closing the whole hand. Please remove obstacles." << endl;    
+    usleep(1*1000000);     
     if(init() != MD_ERROR_OK) {
         cerr << err_type << __FUNCTION__ << ": init() failed to return" << endl;
         return MD_ERROR_ELSE;
-    }
-    
+    }    
     for (int puck=SPREAD; puck>=FINGER1; puck--) {
         setProperty(puck, CMD, CMD_CLOSE);
         usleep(3*1000000);
@@ -473,4 +436,15 @@ int BHand::close()
     setProperty(SPREAD, MODE, MODE_IDLE);
     
     return MD_ERROR_OK;    
+}
+
+
+
+int BHand::init2()
+{
+	bus->init();
+	
+	int puck;
+    for (puck=FINGER1; puck<=SPREAD; puck++)
+        setProperty(puck, STAT, STATUS_READY);
 }

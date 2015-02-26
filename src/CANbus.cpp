@@ -34,11 +34,14 @@ CANbus::CANbus()
 CANbus::~CANbus() {}
 
 int CANbus::init()
-{	
+{
+/** Check if the CAN bus is initialized. If it is, do not do anything. If it is
+	not, call the CAN_Initialize from PCAN-Basic and change the CANbus::initialized
+	value to true.
+*/
     if (!initialized) {
 	    TPCANStatus Status;
 	    cout << msg_type << "Initializing...\n";
-	    //printf("[CAN bus] Initiliazing...\n");
 	
 	    Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_1M, 0, 0, 0);
 	    if (Status != PCAN_ERROR_OK) {
@@ -47,7 +50,6 @@ int CANbus::init()
 	    }
 	    else {
 	        cout << msg_type << "Initialiazation is done.\n";
-		    //printf("[CAN bus] Initiliazation is done...\n");
 		    initialized = true;
 	    }
 	
@@ -81,23 +83,25 @@ int CANbus::reset()
 int CANbus::write(CANMessage msg)
 {	
 
+/** Create types of PCAN-Basic. TPCANMsg is a PCAN Message for PCAN-Basic. */
 	TPCANMsg Message;
 	TPCANStatus Status;
-	Message.MSGTYPE = PCAN_MESSAGE_STANDARD;
-	
+
+/** Take the generic CANmessage msg and put it to TPCANMsg. */
+	Message.MSGTYPE = PCAN_MESSAGE_STANDARD;	
 	Message.LEN = msg.DLC;
 	Message.ID = msg.MSGID;
-	
 	for (int i = 0; i<msg.DLC; i++ )
 		Message.DATA[i] = msg.DATA[i];
-	
+
+/** Check if the CAN bus is initialized. If not return an error. */
 	if (!initialized) {
 	    cerr << err_type << __FUNCTION__ << "The bus is not initialized. Try to initialize the bus first.\n";
 		//printf("Error: The bus is not initialized. Try to initialize the bus first.\n");
 		return MD_ERROR_FAIL;
 	}
 	
-	// Write the message on PCAN_DEVICE
+/** Write the TPCANMsg message to CAN bus with PCANBasic's CAN_Write. */
 	if ((Status=CAN_Write(PCAN_DEVICE, &Message)) != PCAN_ERROR_OK) {
 		printf("[CAN bus] Error %d! CAN Message writing has failed.\n", Status);
 		return MD_ERROR_FAIL;
@@ -105,19 +109,26 @@ int CANbus::write(CANMessage msg)
 	
 	usleep(100); // Sleep for 100 us
 	
-
-			
 	return MD_ERROR_OK;	
 }
 
 
 int CANbus::read(CANMessage* msg) //todo how to pass the Message as an argument, see get_property
 {   
+/** Create types of PCAN-Basic. TPCANMsg is a PCAN Message for PCAN-Basic. */
     TPCANMsg Message;
 	TPCANStatus Status;
+	
+/** Define a counter and a boolean for 32-bit or 16 bit properties. */
     int counter = 0;
     bool is32bit = false;
 	
+/** Begin a loop of reading the CANbus using PCAN-Basic's CAN_Read. The loop
+	will run for 500 times every 1 ms checking every time if the CAN bus has data
+	to read. If nothing is there the loop will run one more time. After the 500 
+	ms of running the function will return an error because probably connection
+	lost. Otherwise the loop will not run, and the CAN_Read will just read the
+	message. */
 	while ((Status=CAN_Read(PCAN_DEVICE, &Message, NULL)) == PCAN_ERROR_QRCVEMPTY) {
 		usleep(1*1000);
 	    counter++;
@@ -130,14 +141,18 @@ int CANbus::read(CANMessage* msg) //todo how to pass the Message as an argument,
 	        return MD_ERROR_FAIL;
 	    }
 	}
+	
+/** If we don't have a PCAN_ERROR_OK, print the error. */
 	if (Status != PCAN_ERROR_OK) {
 		printf("Error 0x%x\n",(int)Status);
 		return MD_ERROR_FAIL;
 	}
-	
+
+/** Finally, put the TPCANMsg message to our own generic CANMessage msg. */
 	msg->DLC = Message.LEN;
 	msg->MSGID = Message.ID;
 	for (int i = 0; i<Message.LEN; i++ )
 		msg->DATA[i] = Message.DATA[i];
+		
 	return MD_ERROR_OK;	
 }
