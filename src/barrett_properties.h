@@ -1,30 +1,30 @@
 /** Properties **/
-const int ACCEL             = 82;
-const int CMD               = 29;
-const int CT                = 56;
-const int OT                = 54;
-const int MODE              = 8;
-const int VERS              = 0;
-const int STAT              = 5;
-const int TSTOP             = 78;
-const int V                 = 44;
-const int ROLE              = 1;
-const int KP                = 79;
-const int KI                = 81;
-const int KD                = 80;
-const int M                 = 58;
-const int P                 = 48;
-const int E                 = 52;
-const int LSG               = 72;
-const int HSG               = 71;
-const int SG                = 25;
-const int MT                = 43;
-const int JP				= 96;
-const int HOLD				= 77;
-const int MCV				= 46;
-const int MOV				= 57;
-const int T					= 42;
-const int MV				= 45;
+const int ACCEL		= 82;
+const int CMD		= 29;
+const int CT		= 56;
+const int OT		= 54;
+const int MODE		= 8;
+const int VERS		= 0;
+const int STAT		= 5;
+const int TSTOP		= 78;
+const int V		= 44;
+const int ROLE		= 1;
+const int KP		= 79;
+const int KI		= 81;
+const int KD		= 80;
+const int M		= 58;
+const int P		= 48;
+const int E		= 52;
+const int LSG		= 72;
+const int HSG		= 71;
+const int SG		= 25;
+const int MT		= 43;
+const int JP		= 96;
+const int HOLD		= 77;
+const int MCV		= 46;
+const int MOV		= 57;
+const int T		= 42;
+const int MV		= 45;
 
 
 /** Other constants **/

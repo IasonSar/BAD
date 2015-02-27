@@ -125,7 +125,9 @@ public:
 
 	/**
 	* The function that decodes a dual packed message (two 22-bit values), 
-	* where the getProperty API is unable to.
+	* where the getProperty API is unable to. Note that this function will
+	* work IF there is a secondary encoder on the hand, which means that a
+	* getProperty(P) will be replied by the hand with a dual packed message.
 	* @param node An int that points to the puck's ID. 11-14 is for FINGER1 to 
 	* FINGER3 and SPREAD and 15 is for the group of all the pucks of the hand.
 	* @param pos Pointer that will contain the current value of the P property.

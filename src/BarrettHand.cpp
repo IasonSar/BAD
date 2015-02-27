@@ -76,7 +76,9 @@ int BHand::init() {
         cin.ignore();
     }
 
-/**  */
+/** Set for all fingers the property STAT (5) to READY (2) in order to 
+    initialize the pucks. Then set the property CMD (29) to HandInitialize (13)
+    in order to open the fingers to their initial position. */
     int puck;
     for (puck=FINGER1; puck<=SPREAD; puck++) {
         setProperty(puck, STAT, STATUS_READY);
@@ -94,33 +96,39 @@ int BHand::init() {
 }
 
 int BHand::setProperty(int node, int property, int value)
-{   
+{
+/** Before you do anything lock the mutex, to be sure that you are the only
+    thread accessing the bus, to keep data communication consistant.  */
 	int rc;
 	rc = pthread_mutex_lock(mutex);
 	int to = node;
 	CANMessage msg;
 	
+/** Distinct between a group and a non group message. */
 	if (node==15) {
-        //cerr << err_type << fun << "Trexw thn write gia node=15\n";
-        
-        // Run the function to create a raw CAN message based on Barrett protocol
-        if (BarrettCANProtocolEncode(&msg, 0x05, property, value, true, true) != MD_ERROR_OK) {
+
+	/** Create a raw CAN message with message id = 5 (group for all pucks)
+	    group=true and include the essential info (property, new value). */
+        	if (BarrettCANProtocolEncode(&msg, 0x05, property, value, true, true) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "BarrettCANProtocolEncode does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
-                
+	/** Use the CANBuss::write() to write the message on the bus. */
 		if (bus->write(msg) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "Bus.write does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
 	}
 	else if (node>=11 && node<=14) {
-        //cerr << err_type << fun << "Trexw thn write gia node=11-14\n";
-        if (BarrettCANProtocolEncode(&msg, node, property, value, false, true) != MD_ERROR_OK) {
+	 
+	/** Create a raw CAN message with message id the given and group = 
+	    false and include the essential info (property, new value). */
+		if (BarrettCANProtocolEncode(&msg, node, property, value, false, true) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "BarrettCANProtocolEncode does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
         
+	/** Use the CANBuss::write() to write the message on the bus. */
 		if (bus->write(msg) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "Bus.write does not return properly.\n";
 			return MD_ERROR_FAIL;
@@ -134,31 +142,41 @@ int BHand::setProperty(int node, int property, int value)
 	}
 	
 	usleep(100); //sleep 100 us
-	
+
+	/** After you are done with accessing the bus free the mutex lock. */
 	rc = pthread_mutex_unlock(mutex);
 		
 	return MD_ERROR_OK;	
 	
 }
 
-//TODO: how to get property from a group, from all pucks
+
 int BHand::getProperty(int node, int property, int* value)
 {
 	int rc;
 	int to = node;
 	CANMessage msg;
-	//int v[2];
-	
+
+/** Before you do anything lock the mutex, to be sure that you are the only
+    	    thread accessing the bus, to keep data communication consistant.  */
 	rc = pthread_mutex_lock(mutex);
 	
+/** Distinct between a group and a non group message. First you need to 
+    send a message with no data to ask for the property and then you
+    wait for the answer. */
 	if (node==15)
 		return MD_ERROR_FAIL; //TODO
-	else if (node>10) { 
+	else if (node>10) {
+ 
+	/** Create a raw CAN message with message id the given and group = 
+	    false and include the essential info (property, new value) and
+	    no data. */
 		if (BarrettCANProtocolEncode(&msg, node, property, 0, false, false) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "BarrettCANProtocolEncode does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
 	
+	/** Use the CANBuss::write() to write the message on the bus. */
 		if (bus->write(msg) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "bus.write does not return properly.\n";
 			return MD_ERROR_FAIL;
@@ -171,29 +189,38 @@ int BHand::getProperty(int node, int property, int* value)
 		return 	MD_ERROR_FAIL;
 	}
 	
+/** Wait 500 μs for the reply. */
 	usleep(500);  // wait 0.5 ms
 	
+/** Read the CANbus for incoming messages. */
 	if (bus->read(&msg) != MD_ERROR_OK) {
 			printf("[Error] in getProperty. Function read() does not returned\n"	
 			       "        successfully.\n");
 			return MD_ERROR_FAIL;
 	}
 	
+/** Distinct between packed and no packed incoming messages. */
 	if (property == P | property == JP) {
+	/** Decode the raw CAN message and return the value of the property
+	    within the CAN message, for a packed message of 22-bit value. */	
 		if (BarrettCANProtocolDecode(msg, value, 1) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "BarrettCANProtocolDecode does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
 	}
-	else {		
+	else {
+		
+	/** Decode the raw CAN message and return the value of the property
+	    within the CAN message, for a regular message (16-bit or 32-bit). */ 
 		if (BarrettCANProtocolDecode(msg, value, 0) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "BarrettCANProtocolDecode does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
 		
-		//*value = v[0];
+
 	}
 	
+	/** After you are done with accessing the bus free the mutex lock. */
 	rc = pthread_mutex_unlock(mutex);
 
 	return MD_ERROR_OK;	
@@ -202,111 +229,117 @@ int BHand::getProperty(int node, int property, int* value)
 
 int BHand::BarrettCANProtocolEncode(CANMessage* msg, int8_t to, int8_t property, int32_t value, bool group, bool set)
 {
-	//CANMessage msg;
-	
-	//TPCANmsg Message;
 	bool is32bit = false;
-	
-	//if group then 100 0000 0000 OR 0 (from:pc) OR to (to:to)
-	if (group) {
-	    //printf("[DEBUG] CANbus::write: exw group...\n");
+
+/** Distinct between group and non-group. If group, you need to put logical 1
+    as the first bit by doing: 100 0000 0000 OR o (from: pc) to (receiver: 
+    arg to). If non-group the message id is equal to arg "to".  */	
+	if (group)
 		msg->MSGID = 0x400 | 0x00 | to;
-	}
-	else {
-	    //printf("[DEBUG] CANbus::write: den exw group, id = to...\n");
+	else
 		msg->MSGID = to;
-	}
-	// If it is a set property command then first bit of data[0] is 1
-	// The rest of them are just the 7-bit property. If it is a get property
-	// we need only one byte for data, not 4.
 	
 	
-	// prop32 is an array containing the 32-bit properties
+/**  prop32 is an array containing the 32-bit properties */
 	int8_t prop32[12] = {48, 50, 52, 54, 56, 58, 66, 68, 74, 88, 96, 98};
 	
-	// Check if property exists in prop32 (if it is a 32-bit property)
+/**  Check if the property exists in prop32 (if it is a 32-bit property). */
 	int8_t *temp = std::find(prop32, prop32+12, property);
-	if (temp != prop32+12){
-	    //cerr << err_type << __FUNCTION__ << "property is 32-bit with index: " \
-	         << (temp - prop32) << endl;
+	if (temp != prop32+12)
 	    is32bit = true;
-	}
 	
+/** If we have a 32-bit property set DLC=6 bytes, meaning 1 control byte, 1
+    zero byte and 4 bytes of data. If is a 16-bit property set DLC=4, ie
+    2 bytes of data. */
 	if (is32bit)
-	    msg->DLC = 6; // len = 6 meaning data = 4 bytes, meaning 32-bit properties
+	    msg->DLC = 6;
 	else
-	    msg->DLC = 4; // len = 4 meaning data = 2 bytes, meaning 16-bit properties
+	    msg->DLC = 4; 
 	
-	// make sure 16-bit prop is 16-bit by filtering with 0xFFFF
+/** Make sure 16-bit prop is 16-bit by filtering with 0xFFFF and 
+    property is 7-bit (the first bit is zero). */
 	if (msg->DLC == 4) {
 	    value = value & 0xFFFF;
 	}
 	
-	// Be sure property is 7-bit (the first is zero)
 	if (property > 127) {
 		cout << "Error. Property is over 7-bit" << endl;
 	    return MD_ERROR_FAIL;
-	}
-	 
+	} 
 	
-	if (set) { // if set property
-	    msg->DATA[0] = 0x80 | property;
-        msg->DATA[1] = 0;
-	    if (!is32bit) { //if is 16-bit
-		    msg->DATA[2] = value & 0x00FF;
-		    uint16_t temp = value & 0xFF00;
-		    temp = temp >> 8;
-		   msg->DATA[3] = temp;
-		}
-		else { //if is 32-bit
-		    int32_t  temp;
-		    msg->DLC = 6;
-		    temp =  value & 0x000000FF;
-            msg->DATA[2] = temp;
-            
-            temp = value & 0x0000FF00;
-            temp = temp >> 8;
-            msg->DATA[3] = temp;
-            
-            temp = value & 0x00FF0000;
-            temp = temp >> 16;
-            msg->DATA[4] = temp;
 
+/** Distinct between set and get property. If it is a set property the first
+	bit of data[0] is 1 and the rest are just the 7-bit property. If
+	it is a get property command we do not need bytes for data.  */
+	if (set) {
+	
+	/** Set the first bit to 1 */
+		msg->DATA[0] = 0x80 | property;
+		msg->DATA[1] = 0;
+	
+	/** Distinct between 16-bit and 32-bit property. */	
+		if (!is32bit) {
+		/** For a 16-bit prop, filter the value and put the LSB
+			first and the MSB second. */
+			msg->DATA[2] = value & 0x00FF;
+			uint16_t temp = value & 0xFF00;
+			temp = temp >> 8;
+			msg->DATA[3] = temp;
+		}
+		else { 
+		/** For 32-bit prop, filter the value and put the LSB
+			first, the middle LSB second, the middle MSB
+			third and the MSB fourth. */
+			int32_t  temp;
+			msg->DLC = 6;
+			temp =  value & 0x000000FF;
+			msg->DATA[2] = temp;
             
-            temp = value & 0xFF000000;
-            temp = temp >> 24;
-            msg->DATA[5] = temp;        
+			temp = value & 0x0000FF00;
+			temp = temp >> 8;
+			msg->DATA[3] = temp;
+
+			temp = value & 0x00FF0000;
+			temp = temp >> 16;
+			msg->DATA[4] = temp;
+
+			temp = value & 0xFF000000;
+			temp = temp >> 24;
+			msg->DATA[5] = temp;        
 		}
 	}
-	else { //if get property
-	    msg->DLC = 2;  
+	else {
+		msg->DLC = 2;  
 		msg->DATA[0] = property;
 		msg->DATA[1] = 0;
 	}
 	
 	return MD_ERROR_OK;
-	
-	//usleep(100); // Sleep for 100 us
-
 }
 
 
 // int packed = 0: no packed, =1:packed P or JP, =2:dual packed P+JP
 int BHand::BarrettCANProtocolDecode(CANMessage msg, int* value, int packed)
 {
-	
+	/** Distinct between non-packed, packed kai dual-packed. The function
+		returns only one value so if packed=1 returns the first 22-bit
+		value (P) and if packed=2 returns the second 22-bit value (JP).
+		To read both values you should dualPackedProperty() (see
+		below). */
 	if (packed==0) {
+	/** Decode the message applying the reverse procedure of 
+		BarrettCANProtocolEncode() for a simple message. */
 		bool is32bit;
 		if (msg.DLC == 4) is32bit = false;
 		else is32bit = true;
 	
-		if (!is32bit) { //if 16-bit
+		if (!is32bit) {
 			uint16_t temp;
 			temp = msg.DATA[3];
 			temp = temp << 8;
 			*value = msg.DATA[2] | temp;	    
 		} 
-		else { //if 32-bit
+		else {
 			uint32_t temp[3];
 			temp[3] = msg.DATA[5];
 			temp[3] = temp[3] << 24;
@@ -323,40 +356,37 @@ int BHand::BarrettCANProtocolDecode(CANMessage msg, int* value, int packed)
 		}
 	}
 	else if (packed==1) {
+	/** Decode the 22-bit message. (3 bytes with 1 as first bit). */
 		uint32_t temp;
 		temp = ((msg.DATA[0] & 0x7F) << 16) | (msg.DATA[1] << 8) | msg.DATA[2];
 		*value = temp;	
 	}
 	else if (packed==2) {
+	/** Decode the 22-bit message. (3 bytes with 1 as first bit). */
 		uint32_t temp;
-		//TODO pass both arguments P & JP, temp[2] sth like that
-		//temp = ((msg.DATA[0] & 0x7F) << 16) | (msg.DATA[1] << 8) | msg.DATA[2];
 		temp = ((msg.DATA[3] & 0x7F) << 16) | (msg.DATA[4] << 8) | msg.DATA[5];
 		*value = temp;
-	}
-	
-	//value[1] = 0;
+	}	
+
 	return MD_ERROR_OK;
 }
 
 
 int BHand::getDualPackedPosition(int node, int* pos, int* jpos)
 {	
-	
-	//TODO check somewhere if the hand/puck/finger has secondary encoder, only then
-	// with the getProperty(P) it would work. Just be sure.
-	
 	int to = node;
 	CANMessage msg;
 	
+/** Distinct between a group and a non-group message. */
 	if (node==15)
 		return MD_ERROR_FAIL; //TODO
 	else if (node>10) {
+	/** Encode the information for th P property. */
 		if (BarrettCANProtocolEncode(&msg, node, P, 0, false, false) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "BarrettCANProtocolEncode does not return properly.\n";
 			return MD_ERROR_FAIL;
 		}
-	
+	/** Write the message to CAN bus to ask for the P property. */
 		if (bus->write(msg) != MD_ERROR_OK) {
 			cerr << err_type << __FUNCTION__ << "bus.write does not return properly.\n";
 			return MD_ERROR_FAIL;
@@ -369,27 +399,28 @@ int BHand::getDualPackedPosition(int node, int* pos, int* jpos)
 		return 	MD_ERROR_FAIL;
 	}
 	
-	usleep(500);  // wait 0.5 ms
-	
+/** Wait 500 ms or the reply. */
+	usleep(500); 
+
+/** Read the message from the CAN bus. */
 	if (bus->read(&msg) != MD_ERROR_OK) {
 			printf("[Error] in getProperty. Function read() does not returned\n"	
 			       "        successfully.\n");
 			return MD_ERROR_FAIL;
 	}
-	
-	
+/** Decode it for packed=1 (it will return the value of P. */	
 	if (BarrettCANProtocolDecode(msg, pos, 1) != MD_ERROR_OK) {
 		cerr << err_type << __FUNCTION__ << "BarrettCANProtocolDecode does not return properly.\n";
 		return MD_ERROR_FAIL;
 		}
-	
+/** Decode for packed=2 (it will return the value of JP) */
 	if (BarrettCANProtocolDecode(msg, jpos, 2) != MD_ERROR_OK) {
 		cerr << err_type << __FUNCTION__ << "BarrettCANProtocolDecode does not return properly.\n";
 		return MD_ERROR_FAIL;
 	}	
 	
 	return MD_ERROR_OK;
-} 
+}
 
 
 int BHand::initPropValues()
@@ -439,7 +470,7 @@ int BHand::close()
 }
 
 
-
+	
 int BHand::init2()
 {
 	bus->init();
