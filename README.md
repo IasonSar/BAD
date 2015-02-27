@@ -32,7 +32,7 @@ If everything is installed you with:
     $ cat /proc/pcan
 You will se something like that:
 
-```
+```Shell
 *------------ PEAK-Systems CAN interfaces (http://www.peak-system.com)-------
 *-------------------------- Release_20110912_n (7.4.0) ----------------------
 *---------------- [mod] [isa] [pci] [dng] [par] [usb] [pcc] -----------------
