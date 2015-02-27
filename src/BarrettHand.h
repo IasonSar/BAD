@@ -45,7 +45,7 @@ class BHand {
 public:
     bool initiliazed; /**< Flag that shows if the hand has been initialized already. */
     
-    /**
+	/**
 	* The contructor of BarrettHand that initialize the member variables.
 	*/
 	BHand(CANbus*, string, pthread_mutex_t*);

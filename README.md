@@ -16,10 +16,10 @@ Dependencies
 
 ## Installing Dependencies on Ubuntu Linux 12.04
 ### 1. Installing PCAN Linux Driver
-Download from http://www.peak-system.com/fileadmin/media/linux/index.htm the latest version of the driver.
+Download from [here](http://www.peak-system.com/fileadmin/media/linux/index.htm) the latest version of the driver.
 ```Shell
-$ sudo apt-get install libpopt-dev			#Install libpopt-dev
-$ sudo apt-get install g++					#Install g++
+$ sudo apt-get install libpopt-dev		#Install libpopt-dev
+$ sudo apt-get install g++			#Install g++
 $ tar -xzf peak-linux-driver-7.XX.tar.gz	#Unpack driver
 $ cd peak-linux-driver-7.XX
 $ make clean

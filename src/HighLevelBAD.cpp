@@ -81,6 +81,35 @@ void BAD::terminate()
     hand->initPropValues();
 }
 
+
+bool BAD::doneMoving(int puck)
+{
+	int mode, hold;
+	if (puck != HAND) {
+				
+		hand->getProperty(puck, MODE, &mode);
+		hand->getProperty(puck, HOLD, &hold);
+		//cout << "MODE: " << mode << ", hold: " << hold << endl;
+		if (mode!=MODE_IDLE & (mode==MODE_PID | hold==0)) {
+			//cerr << err_type << __FUNCTION__ << " I return false. is not moving\n";	
+			return false;
+		}
+		return true;
+	}
+	else {
+		//TODO: ulopoihsh ths done moving an dwthei puck=HAND=15, prepei na tsekarei ola ta xeria
+		cout << "doneMoving has not been implemented for the whole hand yet" << endl;
+	}
+}
+
+void BAD::waitDoneMoving(int puck)
+{
+	while (!doneMoving(puck))
+		usleep(1*1000);
+	
+	//cout << " FINGER" << puck-FINGER1 << " stopped" << endl; 
+}
+
 //TODO read position and decide when to open fingers more fast
 void BAD::fetchAndRelease(int topFinger)
 {	
@@ -171,33 +200,6 @@ void BAD::fetchAndRelease(int topFinger)
 
 }
 
-bool BAD::doneMoving(int puck)
-{
-	int mode, hold;
-	if (puck != HAND) {
-				
-		hand->getProperty(puck, MODE, &mode);
-		hand->getProperty(puck, HOLD, &hold);
-		//cout << "MODE: " << mode << ", hold: " << hold << endl;
-		if (mode!=MODE_IDLE & (mode==MODE_PID | hold==0)) {
-			//cerr << err_type << __FUNCTION__ << " I return false. is not moving\n";	
-			return false;
-		}
-		return true;
-	}
-	else {
-		//TODO: ulopoihsh ths done moving an dwthei puck=HAND=15, prepei na tsekarei ola ta xeria
-		cout << "doneMoving has not been implemented for the whole hand yet" << endl;
-	}
-}
-
-void BAD::waitDoneMoving(int puck)
-{
-	while (!doneMoving(puck))
-		usleep(1*1000);
-	
-	//cout << " FINGER" << puck-FINGER1 << " stopped" << endl; 
-}
 
 void BAD::testingGetPosition()
 {
