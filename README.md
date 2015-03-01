@@ -41,7 +41,31 @@ You will se something like that:
 0    pci -NA- fa010000 018 0x001c 00000000 00000000 00000000 00000000 0x0000
 ```
 ### 2. Installing PCAN-Basic API
-    todo
+Due to a broken link in Peak-Systems website download PCAN-Basic with:
+```
+git clone https://github.com/iSaran/pcanbasic.git
+```
+You have to remove this piece of code from libpcanbasic.cpp, due to compilation issues:
+```
+case PCAN_DEVICE_NUMBER:
+	if (BufferLength < sizeof(int)) {
+		Result = PCAN_ERROR_ILLPARAMVAL;
+		goto leave;
+	}
+	TPEXTRAPARAMS Params;
+	Params.nSubFunction = SF_SET_SERIALNUMBER;
+	Params.func.dwSerialNumber = *((int*) Buffer);
+	if (__ioctl(desc->nFileNo, PCAN_EXTRA_PARAMS, &Params) < 0) {
+		Result = PCAN_ERROR_UNKNOWN;
+		goto leave;
+	}
+```
+Then you may install PCAN-Basic:
+```
+cd pcanbasic
+make
+make install
+```
 
 ## Compiling and using BAD
     todo
