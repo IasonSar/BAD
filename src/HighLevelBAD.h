@@ -100,6 +100,13 @@ public:
 	* @return An error code.
 	*/
 	void goToRelaxedPos();
+
+
+	/**
+	* The function 
+	* @param arg
+	* @return An error code.
+	*/
 	void initSG(bool);
 	double getSG(int finger, bool);
 	void setHLSG(int finger, double HSGperc, double LSGperc);
@@ -117,6 +124,14 @@ public:
 	void precisionGrasp();
 	void precisionGrasp2();
 	void distortionControl(double distortion);
+
+	  
+	/**
+	* Function tha perfoms a simple grasp, whole or precision with with a 
+	* zero spread.
+	* @param HSG_value The threshold value of strain gause that above it, 
+	* the hand will stop, considering that the grasp has been made.
+	*/
 	void simpleGrasp(int);
 	void holdGrasp(int);
 
@@ -130,6 +145,12 @@ public:
 	void touchAndGrab(HandState state);
 
 /** Auxiliary functions */
+	
+	/**
+	* Function that calculate the variance of a matrix's elements.
+	* @param matrix[] The actual matrix.
+	* @return The variance as a double.
+	*/
 	double calculateVariance(int matrix[]);
 };
 

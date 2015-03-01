@@ -36,11 +36,9 @@ BAD::BAD(BHand* myHand)
 }
 BAD::~BAD(){};
 
-
-
-
 int BAD::open(int puck)
-{   
+{
+/** Distinct between group */   
     if (puck == FINGER1 | puck == FINGER2 | puck == FINGER3 | puck == SPREAD) {
         hand->setProperty(puck, OT, 0);
         hand->setProperty(puck, CMD, CMD_OPEN);
@@ -80,7 +78,6 @@ void BAD::terminate()
     hand->close();
     hand->initPropValues();
 }
-
 
 bool BAD::doneMoving(int puck)
 {
@@ -200,7 +197,6 @@ void BAD::fetchAndRelease(int topFinger)
 
 }
 
-
 void BAD::testingGetPosition()
 {
 	usleep(1*1000000);
@@ -275,8 +271,7 @@ void BAD::testTiming()
 **/
 void BAD::handShake(HandState state)
 {
-	
-	
+		
 	struct timeval start, end;
     double mtime, seconds, useconds;
     seconds = 0;
@@ -357,8 +352,6 @@ void BAD::touchAndGrab(HandState state)
 	goToRelaxedPos();
 
 }
-
-
 
 void BAD::test()
 {
@@ -460,7 +453,6 @@ void BAD::logger()
 	myfile.close();	
 	printf("[BAD Logger] Shutting down...\n");	
 }
-
 
 void BAD::precisionGrasp()
 {
@@ -611,7 +603,6 @@ void BAD::distortionControl(double distortion)
     usleep(2*1000*1000);
 }
 
-
 void BAD::staple()
 {
 	usleep(1*1000000);
@@ -742,7 +733,6 @@ void BAD::staple()
     
 }
 
-
 void BAD::simpleCylinderGrasp()
 {
 	usleep(1*1000000);
@@ -788,7 +778,6 @@ void BAD::simpleCylinderGrasp()
     
 }
 
-
 void BAD::syringe()
 {
 
@@ -818,27 +807,28 @@ void BAD::syringe()
 void BAD::simpleGrasp(int HSG_value)
 {
 	usleep(1*1000000);
-    if (!hand->initiliazed)
-        initHand();
-    else
-        open(HAND);
+	if (!hand->initiliazed)
+		initHand();
+	else
+        	open(HAND);
         
-    bool flag = true;
-    char response;
+	bool flag = true;
+	char response;
     
-    while(flag) {
+	while(flag) {
+	/** Set the basic properties for the movement. */
 		for (int puck=FINGER1; puck<=FINGER3; puck++) {
 			hand->setProperty(puck, ACCEL, 150);
 			hand->setProperty(puck, MV, 50);
-			//cout << "mikrainw" << endl;
+
 			hand->setProperty(puck, HSG, HSG_value);
 			hand->setProperty(puck, CMD, CMD_OPEN);
 		}
+	/** */
 		
 		for (int puck=FINGER1; puck<=FINGER3; puck++) {
 			waitDoneMoving(puck);
 		}
-
 		for (int puck=FINGER1; puck<=FINGER3; puck++)
 			hand->setProperty(puck, M, 200000);
 		hand->setProperty(SPREAD, HOLD, 1);
@@ -847,20 +837,18 @@ void BAD::simpleGrasp(int HSG_value)
 		for (int puck=FINGER1; puck<=FINGER3; puck++) {
 			waitDoneMoving(puck);
 		}
-	
+
 		for (int puck=FINGER1; puck<=FINGER3; puck++) {
 			cout << "megalwnw" << endl;
 			hand->setProperty(puck, HSG, 20000);
 			hand->setProperty(puck, LSG, 0);
 			hand->setProperty(puck, MODE, MODE_IDLE);	
-		}
-	
-	
+		}		
+
 		flag = false;
 		int pos[3];
 		for (int puck=FINGER1; puck<=FINGER3; puck++)
 			hand->getProperty(puck, P, &pos[puck-FINGER1]);
-
 		if (pos[0] > 190000 && pos[1] > 190000 && pos[2] > 190000) {
 			cout << "I don't think I grabbed anything, should I try again? (y/n)" << endl;
 			cin >> response;
@@ -870,11 +858,8 @@ void BAD::simpleGrasp(int HSG_value)
 			else if (response == 'N')
 				flag = false;
 		}	
-			
-
 	}
 }	
-
 
 void BAD::holdGrasp(int force)
 {
@@ -900,7 +885,6 @@ void BAD::holdGrasp(int force)
 
 	}
 }
-
 
 void BAD::release(int topFinger)
 {
@@ -942,11 +926,11 @@ void BAD::release(int topFinger)
 
 void BAD::release2(int topFinger)
 {
-        
 	int init_position;
 	int position;
 	int sg[3];
-	int current_sg[4];
+	int current_sg[4
+];
 	int samples = 20;
 	
 	cout << "Ksekianw release2" << endl;
@@ -987,10 +971,10 @@ void BAD::release2(int topFinger)
 		
 			
 		
-		//if (current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 100 && current_sg[2] - current_sg[1] > 25 && current_sg[2] - current_sg[1] < 40) {
+		//if (current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 100 && current_sg[2] - current_sg[1] > 25 && current_sg[2] - current_sg[1] < 40) 
 		if (var > 60) {
 			usleep(1*1000*1000);
-		//if (flag  && current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 140){// && current_sg[1] - current_sg[0] < 500 && current_sg[2] - current_sg[1] > 40) {
+		//if (flag  && current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 140){// && current_sg[1] - current_sg[0] < 500 && current_sg[2] - current_sg[1] > 40) 
 			cout << "\nKOMPLE " << endl;
 			
 			
@@ -1003,19 +987,19 @@ void BAD::release2(int topFinger)
 			break;
 			
 		}
+
 		else if (flag)
 			for (int puck=FINGER1; puck<=FINGER3; puck++)
 				hand->setProperty(puck, MODE, MODE_IDLE);
 		
 		
-		//if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 && current_sg[2] > current_sg[1] - 15 && current_sg[2] < current_sg[1] + 15) {
+		//if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 && current_sg[2] > current_sg[1] - 15 && current_sg[2] < current_sg[1] + 15) 
 		/*
-		if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 ) {
+		if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 ) 
 			sg[0] = current_sg[0];
 //			cout << "1 " << endl;
-		}
-		*/
-			
+		
+		*/		
 	}
 	
 	while(true) {
@@ -1031,10 +1015,14 @@ void BAD::release2(int topFinger)
 			break;
 	}
 	
-
 	for (int puck=FINGER1; puck<=FINGER3; puck++)
 		hand->setProperty(puck, MODE, MODE_IDLE);
-}	
+}
+
+
+
+
+
 
 
 
@@ -1088,10 +1076,9 @@ void BAD::initSG(bool pressing)
     	
     	cout << "\rSG1: " << fixed << perc[0] << "\% - SG2: " << fixed << perc[1] << "\% - SG3: " << fixed << perc[2] << "\%" << std::flush;
     }
-    */
-    
-    
+    */    
 }
+
 /** getSG():
 *	Returns an SG value filtering electronics noise of meg numbers.
 *	with perc true in returns a percentage considering min and max sg
@@ -1126,7 +1113,6 @@ double BAD::getSG(int finger, bool perc)
 		return sg;
 
 }
-
 
 void BAD::fetchAndRelease2(int topFinger)
 {	
@@ -1347,8 +1333,6 @@ void BAD::setHLSG(int finger, double HSGperc, double LSGperc)
 		hand->setProperty(finger, HSG, _LSG);
 }
 
-
-
 double BAD::calculateVariance(int matrix[])
 {
 	double average = 0; 
@@ -1378,8 +1362,3 @@ double BAD::calculateVariance(int matrix[])
 	return variance;
 	
 }
-
-
-
-
-
