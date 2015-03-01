@@ -29,20 +29,21 @@
 /******** BAD Functions ********/
 BAD::BAD(BHand* myHand)
 {
-    hand = myHand;
-    msg_type = "[BAD] ";
-    err_type = "[Error] BAD::";  
-    sg_inited = false;  
+	hand = myHand;
+	msg_type = "[BAD] ";
+	err_type = "[Error] BAD::";  
+	sg_inited = false;  
 }
+
 BAD::~BAD(){};
 
 int BAD::open(int puck)
 {
-/** Distinct between group */   
-    if (puck == FINGER1 | puck == FINGER2 | puck == FINGER3 | puck == SPREAD) {
-        hand->setProperty(puck, OT, 0);
-        hand->setProperty(puck, CMD, CMD_OPEN);
-    }
+/** Distinct between group and non-group and open the fingers. */   
+	if (puck == FINGER1 | puck == FINGER2 | puck == FINGER3 | puck == SPREAD) {
+		hand->setProperty(puck, OT, 0);
+		hand->setProperty(puck, CMD, CMD_OPEN);
+	}
     else if (puck == HAND) {
         for (int myPuck=FINGER1; myPuck <= SPREAD; myPuck++) {
             hand->setProperty(myPuck, OT, 0);
@@ -54,7 +55,8 @@ int BAD::open(int puck)
         cerr << err_type << __FUNCTION__ << ": Puck no." << puck << " wasn't found. Try 11-15." << endl;
         return MD_ERROR_ARGS;
     }
-    
+
+/** Set the spread to IDLE in order to rest the motor. */
     usleep(2*1000000);
     hand->setProperty(SPREAD, MODE, MODE_IDLE);
     return MD_ERROR_OK;
@@ -83,18 +85,16 @@ bool BAD::doneMoving(int puck)
 {
 	int mode, hold;
 	if (puck != HAND) {
-				
 		hand->getProperty(puck, MODE, &mode);
 		hand->getProperty(puck, HOLD, &hold);
-		//cout << "MODE: " << mode << ", hold: " << hold << endl;
-		if (mode!=MODE_IDLE & (mode==MODE_PID | hold==0)) {
-			//cerr << err_type << __FUNCTION__ << " I return false. is not moving\n";	
+
+		if (mode!=MODE_IDLE & (mode==MODE_PID | hold==0)) 
 			return false;
-		}
+
 		return true;
 	}
 	else {
-		//TODO: ulopoihsh ths done moving an dwthei puck=HAND=15, prepei na tsekarei ola ta xeria
+		//TODO
 		cout << "doneMoving has not been implemented for the whole hand yet" << endl;
 	}
 }
@@ -103,11 +103,271 @@ void BAD::waitDoneMoving(int puck)
 {
 	while (!doneMoving(puck))
 		usleep(1*1000);
-	
-	//cout << " FINGER" << puck-FINGER1 << " stopped" << endl; 
 }
 
-//TODO read position and decide when to open fingers more fast
+
+void BAD::goToRelaxedPos()
+{	
+	for (int finger=FINGER1; finger <= FINGER3; finger++) {
+		hand->setProperty(finger, M, 100000);
+	}
+}
+
+void BAD::initSG(bool pressing)
+{
+	usleep(1*1000000);
+	if (!hand->initiliazed)
+		initHand();
+	else
+		open(HAND);
+    
+	usleep(2*1000*1000);
+    
+	cout << "Please push the fingertips slightly opposite to the palm (like you want to open them more)." << endl;
+	cout << "Press ENTER when you are done." << endl;
+	cin.ignore();
+    
+	for (int puck=FINGER1; puck<=FINGER3; puck++)
+		min_sg[puck-FINGER1] = getSG(puck, false);
+    
+	usleep(2*1000*1000);
+    
+	if (pressing) {
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			cout << "Please start to press FINGER" << puck-FINGER1+1 <<" until your hear a sound." << endl;
+			cout << "Press ENTER when you HAVE started pressing to read the SG value and keep pressing for 2secs" << endl;
+			cin.ignore();
+			max_sg[puck-FINGER1] = getSG(puck, false);
+			usleep(2*1000*1000);
+		}
+	}
+	else
+		for (int puck=FINGER1; puck<=FINGER3; puck++)
+			max_sg[puck-FINGER1] = 3800;
+
+	cout << "Thank you." << endl;
+
+	sg_inited = true;
+}
+
+double BAD::getSG(int finger, bool perc)
+{
+	int sg;
+	int counter = 0;
+	hand->getProperty(finger, SG, &sg);
+	while (true) {
+		if (sg > 50000 || sg < 100) {
+			usleep(1*1000);
+			hand->getProperty(finger, SG, &sg);
+			counter++;
+		}
+		else break;
+		
+		if (counter > 300) {
+			cout << "[BAD] getSG: ERROR: Cannot read a logical value for sg" << endl;
+			return 0;
+		}
+	}
+	
+	if (perc && sg_inited)
+		return ((double)(sg-min_sg[finger-FINGER1])/(double)(max_sg[finger-FINGER1]-min_sg[finger-FINGER1]))*100;
+	else if (perc && !sg_inited) {
+		cout << "[BAD] getSG: ERROR: You have not init the SG so you cannot use perc=true. I will return as perc=false." << endl;
+		return sg;
+	}
+	else
+		return sg;
+
+}
+
+void BAD::setHLSG(int finger, double HSGperc, double LSGperc)
+{	
+	
+	int _HSG, _LSG;
+	
+	_HSG = (max_sg[finger-FINGER1]-min_sg[finger-FINGER1])*(HSGperc/100) + min_sg[finger-FINGER1];
+	_LSG = (max_sg[finger-FINGER1]-min_sg[finger-FINGER1])*(LSGperc/100) + min_sg[finger-FINGER1];
+	
+	if (HSGperc != -1)
+		hand->setProperty(finger, HSG, _HSG);
+	if (LSGperc != -1)
+		hand->setProperty(finger, HSG, _LSG);
+}
+
+void BAD::logger()
+{
+	char ch;	
+	
+/** Define time parameters and record initial time as "start"*/
+	struct timeval start, end;
+	double mtime, seconds, useconds;
+	gettimeofday(&start, NULL);
+
+/** 1. Define time parameters to create an id for log file
+	2. Define parameters for writing to file */
+	time_t now = time(0);
+	tm *ltm = localtime(&now);
+	int year, month, day, hour, minute, second;
+	year = 1900+ltm->tm_year;
+	month = 1 + ltm->tm_mon;
+	day = ltm->tm_mday;
+	hour = ltm->tm_hour;
+	minute = ltm->tm_min;
+	second = ltm->tm_sec;
+	
+	// The ID of the log file has the form YMDHMS
+	string id;
+	stringstream out;
+	out << year << month << day << hour << minute << second;
+	id = out.str();
+	
+	// Create the whole name of log file
+	string file_name2 = "log_files/bad_" + id + ".log";
+	
+	// Convert name from string to char* in order to use it with ofstream::open
+	const char * file_name = file_name2.c_str();	
+	
+	ofstream myfile;
+	myfile.open (file_name);
+	
+	cout << "[BAD Logger] is starting to write at file " << file_name << "..." << endl;
+	cout << "[BAD Logger] will terminate after 1 minute of collecting data..." << endl;
+	
+/** Define matrices to read the Hand State */
+	vector<vector<double> > joints;
+	joints.resize(3);	
+	for (int i = 0; i < 3; i++)
+    	joints[i].resize(3);
+    	
+    vector<double> strain;
+	strain.resize(3);
+	int p1, p2, p3, p4, sg1, sg2, sg3;
+
+	mtime = 0;
+	
+	int rc;
+/** Begin the loop. Run for 60 seconds) */
+	 while(mtime < 15) {		
+	/** Record current time and calculate seconds from initial time */
+	    gettimeofday(&end, NULL);		
+		seconds  = end.tv_sec  - start.tv_sec;
+		useconds = end.tv_usec - start.tv_usec;
+    	mtime = ((seconds) * 1000 + useconds/1000.0);
+    	mtime = mtime/1000;
+
+	/** Read the data from robot and write them in log file */	
+		hand->getProperty(FINGER1, SG, &sg1);
+		hand->getProperty(FINGER2, SG, &sg2);
+		hand->getProperty(FINGER3, SG, &sg3);
+		hand->getProperty(FINGER1, P, &p1);
+		hand->getProperty(FINGER2, P, &p2);
+		hand->getProperty(FINGER3, P, &p3);
+		hand->getProperty(SPREAD, P, &p4);
+		myfile << mtime << " " << p1 << " " << p2 << " " << p3 << " " << p4  << " " << sg1-2000 << " "  << sg2-2000 << " " << sg3-2000 << endl;
+		usleep(1*100);
+	}	
+
+/** Close file and terminate Logger. */
+	myfile.close();	
+	printf("[BAD Logger] Shutting down...\n");	
+}
+
+void BAD::simpleGrasp(int HSG_value)
+{
+	usleep(1*1000000);
+	if (!hand->initiliazed)
+		initHand();
+	else
+        	open(HAND);
+        
+	bool flag = true;
+	char response;
+    
+	while(flag) {
+	/** Set the basic properties for the movement. */
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			hand->setProperty(puck, ACCEL, 150);
+			hand->setProperty(puck, MV, 50);
+
+			hand->setProperty(puck, HSG, HSG_value);
+			hand->setProperty(puck, CMD, CMD_OPEN);
+		}
+		
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			waitDoneMoving(puck);
+		}
+	/** Start closing the fingers  */
+		for (int puck=FINGER1; puck<=FINGER3; puck++)
+			hand->setProperty(puck, M, 200000);
+		hand->setProperty(SPREAD, HOLD, 1);
+		hand->setProperty(SPREAD, M, 0);
+
+	/** Wait until the fingers has stopped due to HSG mechanism.  */
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			waitDoneMoving(puck);
+		}
+	/** After the fingers has stopped moving set HSG to 10000. A special
+		value that disables the safety features. See report of
+		the thesis. */
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			hand->setProperty(puck, HSG, 10000);
+			hand->setProperty(puck, LSG, 0);
+			hand->setProperty(puck, MODE, MODE_IDLE);	
+		}		
+
+		flag = false;
+		int pos[3];
+		for (int puck=FINGER1; puck<=FINGER3; puck++)
+			hand->getProperty(puck, P, &pos[puck-FINGER1]);
+
+	/** Grasp failed. Try again or return. */
+		if (pos[0] > 190000 && pos[1] > 190000 && pos[2] > 190000) {
+			cout << "I don't think I grabbed anything, should I try again? (y/n)" << endl;
+			cin >> response;
+			if (response == 'y') {
+				flag = true;
+			}
+			else if (response == 'N')
+				flag = false;
+		}	
+	}
+}	
+
+void BAD::holdGrasp(int force)
+{
+	int pos[3], sg[3];
+	while(true) {
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			hand->setProperty(puck, TSTOP, 0);
+			hand->setProperty(puck, MODE, MODE_PID);
+
+		/** Read current position and SG  */
+			sg[puck-FINGER1] = getSG(puck, false);
+			hand->getProperty(puck, P, &pos[puck-FINGER1]);
+			
+		/** If current SG is smaller than force update position with
+			a bigger one, to apply more pressure. */
+			if (sg[puck-FINGER1]<force-50)
+				hand->setProperty(puck, P, (pos[puck-FINGER1]+100));
+		/** Else release some pressure by opening the hand (smaller
+			position).  */
+			else if (sg[puck-FINGER1]<force+50)
+				hand->setProperty(puck, P, (pos[puck-FINGER1]-100));
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
 void BAD::fetchAndRelease(int topFinger)
 {	
 
@@ -197,32 +457,6 @@ void BAD::fetchAndRelease(int topFinger)
 
 }
 
-void BAD::testingGetPosition()
-{
-	usleep(1*1000000);
-    if (!hand->initiliazed)
-        hand->init();
-    else
-        open(HAND);
-    
-    cout << "Finger starts to moving.." << endl;    
-    hand->setProperty(FINGER1, CMD, CMD_CLOSE);   
-    
-    int mode;
-    
-    while(!doneMoving(FINGER1)) {
-    	int pos, jpos;
-    	hand->getDualPackedPosition(FINGER1, &pos, &jpos);
-    	cout << pos << ", " << jpos << endl;
-    	
-    	
-    	//cout << "Kineitai";
-    }
-    cout << "Movement is over" << endl;
-    
-    
-}
-
 // TODO: pretty crappy function. needs fixing
 void BAD::detectBreakaway(HandState* state)
 {	
@@ -254,14 +488,6 @@ void BAD::detectBreakaway(HandState* state)
 	cout << "\033[1;31mBREAK AWAY at finger\033[0m " << brokenFinger << endl;
 	//cout << "BREAK AWAY at finger " << brokenFinger << endl;
 	//state->printOut();
-	
-}
-
-
-void BAD::testTiming()
-{
-
-	
 	
 }
 
@@ -340,118 +566,10 @@ void BAD::handShake(HandState state)
 		hand->setProperty(finger, MODE, MODE_IDLE);
 }
 
-void BAD::goToRelaxedPos()
-{	
-	for (int finger=FINGER1; finger <= FINGER3; finger++) {
-		hand->setProperty(finger, M, 100000);
-	}
-}
-
 void BAD::touchAndGrab(HandState state)
 {
 	goToRelaxedPos();
 
-}
-
-void BAD::test()
-{
-	while(true){
-		cout << "I am test111" << endl;
-		usleep(1*1000000);
-	}
-	pthread_exit(NULL);
-}
-
-
-/** logger()
-*   creates a logfile in the log directory and ask the robot for data for 30 
-*	sec, that writes in the log file. Data is position and strain gause. 
-*	The log files has this form :
-*	time p1 p2 p3 p_spread sg1 sg2 sg3
-*   Note: You have to run it as an asychronous thread, in parallel with the
-*	main application
-**/
-void BAD::logger()
-{
-	char ch;	
-	
-/** Define time parameters and record initial time as "start"*/
-	struct timeval start, end;
-    double mtime, seconds, useconds;
-    gettimeofday(&start, NULL);
-
-/** 1. Define time parameters to create an id for log file
-	2. Define parameters for writing to file */
-	time_t now = time(0);
-	tm *ltm = localtime(&now);
-	int year, month, day, hour, minute, second;
-	year = 1900+ltm->tm_year;
-	month = 1 + ltm->tm_mon;
-	day = ltm->tm_mday;
-	hour = ltm->tm_hour;
-	minute = ltm->tm_min;
-	second = ltm->tm_sec;
-	
-	// The ID of the log file has the form YMDHMS
-	string id;
-	stringstream out;
-	out << year << month << day << hour << minute << second;
-	id = out.str();
-	
-	// Create the whole name of log file
-	string file_name2 = "log_files/bad_" + id + ".log";
-	
-	// Convert name from string to char* in order to use it with ofstream::open
-	const char * file_name = file_name2.c_str();	
-	
-	ofstream myfile;
-	myfile.open (file_name);
-	
-	cout << "[BAD Logger] is starting to write at file " << file_name << "..." << endl;
-	cout << "[BAD Logger] will terminate after 1 minute of collecting data..." << endl;
-	//cout << "[BAD Logger] When the experiment is finished \033[1;31mtype ESC and press ENTER\033[0m to terminate BAD Logger." << endl;
-
-	
-/** Define matrices to read the Hand State */
-	vector<vector<double> > joints;
-	joints.resize(3);	
-	for (int i = 0; i < 3; i++)
-    	joints[i].resize(3);
-    	
-    vector<double> strain;
-	strain.resize(3);
-	int p1, p2, p3, p4, sg1, sg2, sg3;
-
-	mtime = 0;
-	
-	int rc;
-/** Begin the loop. Run for 60 seconds) */
-	 while(mtime < 15) {		
-	/** Record current time and calculate seconds from initial time */
-	    gettimeofday(&end, NULL);		
-		seconds  = end.tv_sec  - start.tv_sec;
-		useconds = end.tv_usec - start.tv_usec;
-    	mtime = ((seconds) * 1000 + useconds/1000.0);
-    	mtime = mtime/1000;
-
-	/** Read the data from robot and write them in log file */	
-		hand->getProperty(FINGER1, SG, &sg1);
-		hand->getProperty(FINGER2, SG, &sg2);
-		hand->getProperty(FINGER3, SG, &sg3);
-		hand->getProperty(FINGER1, P, &p1);
-		hand->getProperty(FINGER2, P, &p2);
-		hand->getProperty(FINGER3, P, &p3);
-		hand->getProperty(SPREAD, P, &p4);
-		myfile << mtime << " " << p1 << " " << p2 << " " << p3 << " " << p4  << " " << sg1-2000 << " "  << sg2-2000 << " " << sg3-2000 << endl;
-		//cout << " " << p1 << " " << p2 << " " << p3 << " " << p4  << " " << sg1-2000 << " "  << sg2-2000 << " " << sg3-2000 << endl;
-		//cout << sg1-2000 << " "  << sg2-2000 << " " << sg3-2000 << endl;
-	/** Run the loop in a specified frequency */
-		usleep(1*100);
-	}	
-
-/** Close file and terminate Logger. */
-	myfile.close();	
-	printf("[BAD Logger] Shutting down...\n");	
 }
 
 void BAD::precisionGrasp()
@@ -778,128 +896,22 @@ void BAD::simpleCylinderGrasp()
     
 }
 
-void BAD::syringe()
-{
-
-	usleep(1*1000000);
-    if (!hand->initiliazed)
-        initHand();
-    else
-        open(HAND);
-        
-    
-    hand->setProperty(FINGER1, M, 80000);
-    hand->setProperty(FINGER2, M, 80000);
-    hand->setProperty(FINGER3, M, 100000);
-    
-    usleep(5*1000*1000);
-               
-    /*
-    for (int puck=FINGER1; puck<=FINGER3; puck++) {
-    	hand->setProperty(puck, V, 40);
-        hand->setProperty(puck, TSTOP, 0);
-        hand->setProperty(puck, MODE, MODE_VELOCITY);
-    }
-    */
-
-}
-
-void BAD::simpleGrasp(int HSG_value)
-{
-	usleep(1*1000000);
-	if (!hand->initiliazed)
-		initHand();
-	else
-        	open(HAND);
-        
-	bool flag = true;
-	char response;
-    
-	while(flag) {
-	/** Set the basic properties for the movement. */
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			hand->setProperty(puck, ACCEL, 150);
-			hand->setProperty(puck, MV, 50);
-
-			hand->setProperty(puck, HSG, HSG_value);
-			hand->setProperty(puck, CMD, CMD_OPEN);
-		}
-	/** */
-		
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			waitDoneMoving(puck);
-		}
-		for (int puck=FINGER1; puck<=FINGER3; puck++)
-			hand->setProperty(puck, M, 200000);
-		hand->setProperty(SPREAD, HOLD, 1);
-		hand->setProperty(SPREAD, M, 0);
-	
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			waitDoneMoving(puck);
-		}
-
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			cout << "megalwnw" << endl;
-			hand->setProperty(puck, HSG, 20000);
-			hand->setProperty(puck, LSG, 0);
-			hand->setProperty(puck, MODE, MODE_IDLE);	
-		}		
-
-		flag = false;
-		int pos[3];
-		for (int puck=FINGER1; puck<=FINGER3; puck++)
-			hand->getProperty(puck, P, &pos[puck-FINGER1]);
-		if (pos[0] > 190000 && pos[1] > 190000 && pos[2] > 190000) {
-			cout << "I don't think I grabbed anything, should I try again? (y/n)" << endl;
-			cin >> response;
-			if (response == 'y') {
-				flag = true;
-			}
-			else if (response == 'N')
-				flag = false;
-		}	
-	}
-}	
-
-void BAD::holdGrasp(int force)
-{
-	int pos[3], sg[3];
-	while(true) {
-		cout << "MPIKA" << endl;
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			hand->setProperty(puck, TSTOP, 0);
-			hand->setProperty(puck, MODE, MODE_PID);
-			sg[puck-FINGER1] = getSG(puck, false);
-			hand->getProperty(puck, P, &pos[puck-FINGER1]);
-			
-			
-			if (sg[puck-FINGER1]<force-50)
-				hand->setProperty(puck, P, (pos[puck-FINGER1]+100));
-			else if (sg[puck-FINGER1]<force+50)
-				hand->setProperty(puck, P, (pos[puck-FINGER1]-100));
-		}
-		
-		cout << "\rSG1: " << getSG(FINGER1, false) << " - SG2: " << getSG(FINGER2, false) << " - SG3: " << getSG(FINGER3, false) << std::flush;
-	
-		//usleep(1*1000);
-
-	}
-}
-
 void BAD::release(int topFinger)
 {
-        
 	int init_position;
 	int position;
 	int sg[3];
 	int current_sg;
 	
-
+/** Read the initial SG and position of the top finger.  */
 	hand->getProperty(topFinger, SG, &sg[0]);
 	hand->getProperty(topFinger, P, &init_position);
-
 	
 	while(true) {
+	/** Read the current SG and position. If the current sg is much bigger
+		than ininial SG, it means someone is pulling the object and
+		you have to release it. The release is slow at first, and
+		quicker after. */
 		hand->getProperty(topFinger, SG, &current_sg);
 		hand->getProperty(topFinger, P, &position);		
 		if (current_sg - sg[0] > 150)
@@ -918,7 +930,6 @@ void BAD::release(int topFinger)
 		if ( position < 40000 )
 			break;
 	}
-	
 
 	for (int puck=FINGER1; puck<=FINGER3; puck++)
 		hand->setProperty(puck, MODE, MODE_IDLE);
@@ -1026,93 +1037,6 @@ void BAD::release2(int topFinger)
 
 
 
-void BAD::initSG(bool pressing)
-{
-	usleep(1*1000000);
-    if (!hand->initiliazed)
-        initHand();
-    else
-        open(HAND);
-    
-    usleep(2*1000*1000);
-    
-    cout << "Please push the fingertips slightly opposite to the palm (like you want to open them more)." << endl;
-    cout << "Press ENTER when you are done." << endl;
-	cin.ignore();
-    
-    for (int puck=FINGER1; puck<=FINGER3; puck++)
-    	min_sg[puck-FINGER1] = getSG(puck, false);
-    
-    usleep(2*1000*1000);
-    
-    if (pressing) {
-    	for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			cout << "Please start to press FINGER" << puck-FINGER1+1 <<" until your hear a sound." << endl;
-			cout << "Press ENTER when you HAVE started pressing to read the SG value and keep pressing for 2secs" << endl;
-			cin.ignore();
-			max_sg[puck-FINGER1] = getSG(puck, false);
-			usleep(2*1000*1000);
-    	}
-    }
-    else
-    	for (int puck=FINGER1; puck<=FINGER3; puck++)
-			max_sg[puck-FINGER1] = 3800;
-
-    
-    cout << "Thank you." << endl;
-    
-    sg_inited = true;
-    
-    /*
-    cout << "MIN: " << min_sg[0] << " " << min_sg[1] << " " << min_sg[2] << endl;\
-    cout << "MAX: " << max_sg[0] << " " << max_sg[1] << " " << max_sg[2] << endl;
-
-    double perc[3];    
-    cout.precision(2);    
-    while(true) {
-    	usleep(1*1000);    	
-    	for (int puck=FINGER1; puck<=FINGER3; puck++)
-			perc[puck-FINGER1] = getSG(puck, true);
-    	
-    	cout << "\rSG1: " << fixed << perc[0] << "\% - SG2: " << fixed << perc[1] << "\% - SG3: " << fixed << perc[2] << "\%" << std::flush;
-    }
-    */    
-}
-
-/** getSG():
-*	Returns an SG value filtering electronics noise of meg numbers.
-*	with perc true in returns a percentage considering min and max sg
-* 	with perc=false it retuns just clean sg
-*/
-double BAD::getSG(int finger, bool perc)
-{
-	int sg;
-	int counter = 0;
-	hand->getProperty(finger, SG, &sg);
-	while (true) {
-		if (sg > 50000 || sg < 100) {
-			usleep(1*1000);
-			hand->getProperty(finger, SG, &sg);
-			counter++;
-		}
-		else break;
-		
-		if (counter > 300) {
-			cout << "[BAD] getSG: ERROR: Cannot read a logical value for sg" << endl;
-			return 0;
-		}
-	}
-	
-	if (perc && sg_inited)
-		return ((double)(sg-min_sg[finger-FINGER1])/(double)(max_sg[finger-FINGER1]-min_sg[finger-FINGER1]))*100;
-	else if (perc && !sg_inited) {
-		cout << "[BAD] getSG: ERROR: You have not init the SG so you cannot use perc=true. I will return as perc=false." << endl;
-		return sg;
-	}
-	else
-		return sg;
-
-}
 
 void BAD::fetchAndRelease2(int topFinger)
 {	
@@ -1316,21 +1240,6 @@ void BAD::precisionGrasp2()
     hand->setProperty(HAND, MODE, MODE_IDLE);
     hand->setProperty(SPREAD, MODE, MODE_IDLE);
     
-}
-
-//set hlsg. with -1 you dont set anything
-void BAD::setHLSG(int finger, double HSGperc, double LSGperc)
-{	
-	
-	int _HSG, _LSG;
-	
-	_HSG = (max_sg[finger-FINGER1]-min_sg[finger-FINGER1])*(HSGperc/100) + min_sg[finger-FINGER1];
-	_LSG = (max_sg[finger-FINGER1]-min_sg[finger-FINGER1])*(LSGperc/100) + min_sg[finger-FINGER1];
-	
-	if (HSGperc != -1)
-		hand->setProperty(finger, HSG, _HSG);
-	if (LSGperc != -1)
-		hand->setProperty(finger, HSG, _LSG);
 }
 
 double BAD::calculateVariance(int matrix[])
