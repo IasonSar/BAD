@@ -1,4 +1,27 @@
-/** Properties **/
+/**
+	Author: Iason Sarantopoulos
+	Institute: AUTh (Aristotle University of Thessaloniki)
+	Last update: 28/02/2015
+	
+	This file is part of BAD (Barretthand AUTh Driver). BAD is a 
+	basic driver to control a BarrettHand under Linux. This driver does not 
+	provide real-time capabilities.
+	
+	BAD is free software; you can redistribute it and/or modify
+	it under the terms of the GNU Lesser General Public License as published by
+	the Free Software Foundation; either version 3 of the License, or (at your
+	option) any later version.
+
+	BAD is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public License
+ 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/** Properties of BarrettHand**/
 const int ACCEL		= 82;
 const int CMD		= 29;
 const int CT		= 56;
