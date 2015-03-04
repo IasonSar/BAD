@@ -64,7 +64,7 @@ Then you may install PCAN-Basic:
 ```
 cd pcanbasic
 make
-make install
+sudo make install
 ```
 
 ## Compiling and using BAD

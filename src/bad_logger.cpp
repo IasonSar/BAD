@@ -44,12 +44,6 @@ struct arg_struct {
 
 /** Create wrapper functions in order to call C++ object member functions
 	as a POSIX thread.  */
-void *callTest(void *object)
-{
-	((BAD *)object)->test();
-	return NULL;
-}
-
 void *callLogger(void *object)
 {
 	((BAD *)object)->logger();
