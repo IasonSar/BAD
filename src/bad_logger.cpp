@@ -23,7 +23,6 @@
  	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#include "kinematics.hh"
 #include "HighLevelBAD.h"
 
 #define NUM_THREADS     5
@@ -34,6 +33,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int rc;
 
+/** Define a struct to pass multiple objects to POSIX create thread function. */
 struct arg_struct {
     BAD*	 object;
     HandState* myState;
@@ -42,13 +42,8 @@ struct arg_struct {
 
 
 
-
-void *callTest(void *object)
-{
-	((BAD *)object)->test();
-	return NULL;
-}
-
+/** Create wrapper functions in order to call C++ object member functions
+	as a POSIX thread.  */
 void *callLogger(void *object)
 {
 	((BAD *)object)->logger();
@@ -97,8 +92,8 @@ int main(int argc, char* argv[])
 	
 	struct arg_struct args;
 	args.object = &driver;
-    args.myState = &state;
-    args.myDouble = 1;
+	 args.myState = &state;
+	args.myDouble = 1;
 
 	//driver.initHand();
 
@@ -108,8 +103,7 @@ int main(int argc, char* argv[])
 	pthread_t threads[NUM_THREADS];
 	
 	driver.initHand();
-	//driver.logger();
-	
+
 	/*
 	rc = pthread_create(&threads[0], NULL, &callTest, &driver);
 	if (rc){
@@ -137,12 +131,12 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 	
-    rc = pthread_join(threads[0], &status);
-    rc = pthread_join(threads[1], &status);
-    pthread_exit(NULL);
-    
-    return 0;
-
+/** Wait the two threads to finish, before you finish main. */
+	rc = pthread_join(threads[0], &status);
+	rc = pthread_join(threads[1], &status);
+	pthread_exit(NULL);
+	
+	return 0;
 }
 
 

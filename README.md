@@ -41,10 +41,41 @@ You will se something like that:
 0    pci -NA- fa010000 018 0x001c 00000000 00000000 00000000 00000000 0x0000
 ```
 ### 2. Installing PCAN-Basic API
-    todo
+Due to a broken link in Peak-Systems website download PCAN-Basic with:
+```
+git clone https://github.com/iSaran/pcanbasic.git
+```
+You have to remove this piece of code from libpcanbasic.cpp, due to compilation issues:
+```
+case PCAN_DEVICE_NUMBER:
+	if (BufferLength < sizeof(int)) {
+		Result = PCAN_ERROR_ILLPARAMVAL;
+		goto leave;
+	}
+	TPEXTRAPARAMS Params;
+	Params.nSubFunction = SF_SET_SERIALNUMBER;
+	Params.func.dwSerialNumber = *((int*) Buffer);
+	if (__ioctl(desc->nFileNo, PCAN_EXTRA_PARAMS, &Params) < 0) {
+		Result = PCAN_ERROR_UNKNOWN;
+		goto leave;
+	}
+```
+Then you may install PCAN-Basic:
+```
+cd pcanbasic
+make
+sudo make install
+```
 
 ## Compiling and using BAD
-    todo
+Compile the source code:
+```
+make all
+```
+
+This will create two executables: bad and bad_logger. With bad running the HighLevelBAD.h functions and bad_logger running two threads, one for a application function and one for the BAD::logger() function, which record data.
+
+The user can extend the BAD API by adding functions in HighLevelBAD.h (implementations in HighLevelBAD.cpp) and then by call them in main() in bad.cpp. You can consult the already existing code of the API to learn how to use the functions.	
 
 Changelist
 ----------

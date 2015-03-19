@@ -25,10 +25,8 @@
 
 //#include "kinematics.hh"
 #include "HighLevelBAD.h"
-#include "examples.h"
 
 using namespace std;
-
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -39,15 +37,14 @@ int main(int argc, char* argv[])
 	
 	string hand_type = "BH8-282";
 	
-	/* Create the CAN bus and the hand objects */
+/* Create the CAN bus and the hand objects */
 	CANbus bus;
 	BHand hand(&bus, hand_type, &mutex);
 	HandState state(&hand);
 	BAD driver(&hand);
 	Kinematics kin;
 	
-	
-	/** Now you can write your own code using BAD API */	
+/** Now you can write your own code using BAD API */	
 	
 	//bus.init();
 	driver.initHand();
@@ -67,14 +64,6 @@ int main(int argc, char* argv[])
 	//driver.release2(FINGER2);
 	//driver.holdGrasp(3100);
 	driver.terminate();
-	
-	int m;
-	
-	while(true) {
-		hand.getProperty(FINGER1, MODE, &m);
-		cout << "\rSG1: " << driver.getSG(FINGER1, false) << " - SG2: " << driver.getSG(FINGER2, false) << " - SG3: " << driver.getSG(FINGER3, false) << std::flush;
-	}
-		
 	
 	printf("[BAD] Shutting down...\n");	
 	return 0;

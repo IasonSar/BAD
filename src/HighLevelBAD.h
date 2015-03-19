@@ -52,7 +52,7 @@ public:
 	*/
 	~BAD();
     
-/** Basic functionality of BarretHand */
+	/****** Basic functionality of BarretHand */
 
 	/**
 	* The function for opening the fingers. CAUTION: This function will
@@ -95,42 +95,110 @@ public:
 	void waitDoneMoving(int);
 
 	/**
-	* The function
-	* @param arg
-	* @return An error code.
+	* The function that move the fingers to a humanoid relaxed position.
 	*/
 	void goToRelaxedPos();
+
+
+	/**
+	* The function that initializes the SG values. Initially it reads the
+	* SG values with no load. Then the user will be asked to push the 
+	* fingers to measure the maximum value (about 2kg of force).
+	* @param pressing. If true the user has to apply a force at the
+	* fingertips. If false a default value (4000) is being noted as
+	* the maximum value.
+	*/
 	void initSG(bool);
+
+	/**
+	* Function that returns the SG value of one puck.
+	* @param finger The ID of the puck whose SG is needed.
+	* @param perc If true the returned value is a percentage, with 
+	* zero having the minimum SG (as the initSG() measured) and with
+	* 100% the maximum SG. If false the true value of the sensor is
+	* being returned, but first is being filtered from noise.
+	* @return The SG value.
+	* @see BAD::initSG()
+	*/
 	double getSG(int finger, bool);
+
+	/**
+	* Function that converts SG values from percentages to raw sensor
+	* values and write them into the pucks.
+	* @param finger The ID of the puck.
+	* @param HSGperc The value of HSG as a percentage. If -1 it will not
+	* write anything.
+	* @param LSGperc The value of LSGperc as a percentage. If -1 it will not
+	* write anything.
+	*/
 	void setHLSG(int finger, double HSGperc, double LSGperc);
 
-/** Testing and Benchmarking Tools */
-	void testTiming();
-	void test();
-	void testingGetPosition();
+	/****** Testing and Benchmarking Tools */
+
+	/**
+	* Function that has to run as an asychronous thread in parallel. It
+	* creates a log file in the log directory (/logFiles) and asks the 
+	* robot for data for 30 seconds. Data is position and strain gause.
+	* The log files has the form:
+	* time p1 p2 p3 p_spread sg1 sg2 sg3
+	* Note, that running logger in parralel with the application might
+	* reduce performance, as the logger uses bandwidth.
+	*/
 	void logger();
 	
-/** Applications and uses of BarrettHand */
+	/****** Applications and uses of BarrettHand */
+
+	  
+	/**
+	* Function tha perfoms a simple grasp, whole or precision with with a 
+	* zero spread.
+	* @param HSG_value The threshold value of strain gause that above it, 
+	* the hand will stop, considering that the grasp has been completed.
+	*/
+	void simpleGrasp(int);
+
+	/**
+	* Function that hold the grasp implementing a position control.
+	* @param force An int that represents the SG value that the user
+	* wants to maintain at the fingertips.
+	*/
+	void holdGrasp(int);
+
+	/**
+	* Function to release an object with a human-friendly way. The robot
+	* will feel the forces of the top finger, and if it feels that the 
+	* human is trying to take the object it will release it gently.
+	* This function is using a threshold critirion for make this 
+	* decision.
+	* @param topFinger The ID of the finger's puck that is on top.
+	*/
+	void release(int);
+
 	void fetchAndRelease(int);
 	void fetchAndRelease2(int);
 	void handShake(HandState);
 	void precisionGrasp();
 	void precisionGrasp2();
 	void distortionControl(double distortion);
-	void simpleGrasp(int);
-	void holdGrasp(int);
 
-/** Under development and TODOs */	
-	void release(int);
+	/****** Auxiliary functions */
+
+	/**
+	* Function that calculate the variance of a matrix's elements.
+	* @param matrix[] The actual matrix.
+	* @return The variance as a double.
+	*/
+	double calculateVariance(int matrix[]);
+
+	
+	/** Under development and TODOs. This code is NOT properly documented 
+		because it does not consist solid implementation. Be cautions 
+		if you want to use it. */	
 	void release2(int topFinger);
 	void detectBreakaway(HandState* state);
 	void staple();
 	void simpleCylinderGrasp();
-	void syringe();
 	void touchAndGrab(HandState state);
-
-/** Auxiliary functions */
-	double calculateVariance(int matrix[]);
 };
 
 
