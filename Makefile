@@ -74,7 +74,7 @@ CFLAGS  = $(INC) $(LDLIBS)
 endif
 
 TARGET1 = bad
-FILES1  = $(SRC)/$(TARGET1).cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC)/HighLevelBAD.cpp  $(SRC)/examples.cpp $(SRC)/kinematics.cpp $(SRC)/extra_library.cpp
+FILES1  = $(SRC)/$(TARGET1).cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC)/HighLevelBAD.cpp  $(SRC)/kinematics.cpp $(SRC)/extra_library.cpp
 
 TARGET2 = bad_logger
 FILES2  = $(SRC)/$(TARGET2).cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC)/HighLevelBAD.cpp $(SRC)/kinematics.cpp

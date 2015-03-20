@@ -23,6 +23,8 @@
  	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+
 //#include "kinematics.hh"
 #include "HighLevelBAD.h"
 
@@ -60,10 +62,11 @@ int main(int argc, char* argv[])
 	//driver.staple();
 	//driver.simpleCylinderGrasp();
 	//driver.syringe();
-	//driver.simpleGrasp(2800);
+	driver.simpleGrasp(2400);
+	driver.release(FINGER1);
 	//driver.release2(FINGER2);
 	//driver.holdGrasp(3100);
-	driver.terminate();
+	//driver.terminate();
 	
 	printf("[BAD] Shutting down...\n");	
 	return 0;

@@ -173,12 +173,33 @@ public:
 	* @param topFinger The ID of the finger's puck that is on top.
 	*/
 	void release(int);
-
-	void fetchAndRelease(int);
-	void fetchAndRelease2(int);
+	
+	/**
+	* Function that uses a grasping function (eg simplegrasp())
+	* and a release function (eg release1, or release2()) in order
+	* to perform a simple handover interaction.
+	*/
+	void handover();
+	
+	/**
+	* Function that make the non-backdrivable fingers more friendly
+	* towards a human during a handshake. It makes the fingers
+	* more compliant.
+	* @param HandState A Handstate object.
+	*/
 	void handShake(HandState);
+
+	/**
+	* Function that performs a rudimental precision grasp.
+	*/	
 	void precisionGrasp();
-	void precisionGrasp2();
+
+	/**
+	* Function that performs an example of distortion control of an object.
+	* @param distorion A double with a value in the range 0-1. If equals 0
+	* the robot will not distort the object. If equals 1 the robot will
+	* apply the maximum force in order to fully distort the object.
+	*/
 	void distortionControl(double distortion);
 
 	/****** Auxiliary functions */
@@ -192,10 +213,13 @@ public:
 
 	
 	/** Under development and TODOs. This code is NOT properly documented 
-		because it does not consist solid implementation. Be cautions 
+		because it does not consist solid implementations. Be caution
 		if you want to use it. */	
 	void release2(int topFinger);
+	void fetchAndRelease(int);
+	void fetchAndRelease2(int);
 	void detectBreakaway(HandState* state);
+	void precisionGrasp2();
 	void staple();
 	void simpleCylinderGrasp();
 	void touchAndGrab(HandState state);

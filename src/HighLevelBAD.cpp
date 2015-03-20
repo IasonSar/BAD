@@ -336,6 +336,7 @@ void BAD::simpleGrasp(int HSG_value)
 void BAD::holdGrasp(int force)
 {
 	int pos[3], sg[3];
+	
 	while(true) {
 		for (int puck=FINGER1; puck<=FINGER3; puck++) {
 			hand->setProperty(puck, TSTOP, 0);
@@ -358,14 +359,12 @@ void BAD::holdGrasp(int force)
 }
 
 
-
-
-
-
-
-
-
-
+void BAD::handover()
+{
+	simpleGrasp(2800);
+	release(FINGER1);
+	//release2(FINGER1);
+}
 
 
 void BAD::fetchAndRelease(int topFinger)
@@ -940,8 +939,7 @@ void BAD::release2(int topFinger)
 	int init_position;
 	int position;
 	int sg[3];
-	int current_sg[4
-];
+	int current_sg[4];
 	int samples = 20;
 	
 	cout << "Ksekianw release2" << endl;
@@ -965,14 +963,10 @@ void BAD::release2(int topFinger)
 			current_sg[3] = getSG(topFinger, false);
 			sg_diff[i] = current_sg[3] - current_sg[0];
 		}
-	
-		
 		//usleep(500*1000);
 		hand->getProperty(topFinger, SG, &current_sg[1]);
 		//usleep(500*1000);
 		hand->getProperty(topFinger, SG, &current_sg[2]);
-		
-		
 		
 		var = calculateVariance(sg_diff);
 		cout.precision(2);
@@ -985,7 +979,7 @@ void BAD::release2(int topFinger)
 		//if (current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 100 && current_sg[2] - current_sg[1] > 25 && current_sg[2] - current_sg[1] < 40) 
 		if (var > 60) {
 			usleep(1*1000*1000);
-		//if (flag  && current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 140){// && current_sg[1] - current_sg[0] < 500 && current_sg[2] - current_sg[1] > 40) 
+		//if (flag  && current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 140)// && current_sg[1] - current_sg[0] < 500 && current_sg[2] - current_sg[1] > 40) 
 			cout << "\nKOMPLE " << endl;
 			
 			
@@ -1003,7 +997,7 @@ void BAD::release2(int topFinger)
 			for (int puck=FINGER1; puck<=FINGER3; puck++)
 				hand->setProperty(puck, MODE, MODE_IDLE);
 		
-		
+	}		
 		//if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 && current_sg[2] > current_sg[1] - 15 && current_sg[2] < current_sg[1] + 15) 
 		/*
 		if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 ) 
@@ -1011,7 +1005,7 @@ void BAD::release2(int topFinger)
 //			cout << "1 " << endl;
 		
 		*/		
-	}
+	
 	
 	while(true) {
 		hand->getProperty(topFinger, P, &position);	
@@ -1029,13 +1023,6 @@ void BAD::release2(int topFinger)
 	for (int puck=FINGER1; puck<=FINGER3; puck++)
 		hand->setProperty(puck, MODE, MODE_IDLE);
 }
-
-
-
-
-
-
-
 
 
 void BAD::fetchAndRelease2(int topFinger)
