@@ -429,7 +429,7 @@ int BHand::initPropValues()
     
     for (int puck=FINGER1; puck<=FINGER3; puck++) {
         setProperty(puck, TSTOP, 50);
-        setProperty(puck, MT, 2700);
+        setProperty(puck, MT, 22200);
         setProperty(puck, CT, 195000);
         setProperty(puck, OT, 0);
         setProperty(puck, MV, 400);

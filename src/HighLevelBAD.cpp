@@ -37,6 +37,8 @@ BAD::BAD(BHand* myHand)
 
 BAD::~BAD(){};
 
+/** Basic BHand functions  */
+
 int BAD::open(int puck)
 {
 /** Distinct between group and non-group and open the fingers. */   
@@ -104,7 +106,6 @@ void BAD::waitDoneMoving(int puck)
 	while (!doneMoving(puck))
 		usleep(1*1000);
 }
-
 
 void BAD::goToRelaxedPos()
 {	
@@ -247,7 +248,7 @@ void BAD::logger()
 	
 	int rc;
 /** Begin the loop. Run for 60 seconds) */
-	 while(mtime < 15) {		
+	 while(mtime < 19.8) {		
 	/** Record current time and calculate seconds from initial time */
 	    gettimeofday(&end, NULL);		
 		seconds  = end.tv_sec  - start.tv_sec;
@@ -272,6 +273,15 @@ void BAD::logger()
 	printf("[BAD Logger] Shutting down...\n");	
 }
 
+/** High level examples and applications*/
+
+void BAD::handover()
+{
+	simpleGrasp(2200);
+	release2(FINGER1);
+	//release2(FINGER1);
+}
+
 void BAD::simpleGrasp(int HSG_value)
 {
 	usleep(1*1000000);
@@ -282,56 +292,185 @@ void BAD::simpleGrasp(int HSG_value)
         
 	bool flag = true;
 	char response;
-    
+   	
+	
+	for (int puck=FINGER1; puck<=FINGER3; puck++) 
+		hand->setProperty(puck, MT, 1900);
+	 
 	while(flag) {
-	/** Set the basic properties for the movement. */
+		/** Set the basic properties for the movement. */
 		for (int puck=FINGER1; puck<=FINGER3; puck++) {
 			hand->setProperty(puck, ACCEL, 150);
-			hand->setProperty(puck, MV, 50);
+				hand->setProperty(puck, MV, 50);
 
-			hand->setProperty(puck, HSG, HSG_value);
-			hand->setProperty(puck, CMD, CMD_OPEN);
-		}
-		
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			waitDoneMoving(puck);
-		}
-	/** Start closing the fingers  */
-		for (int puck=FINGER1; puck<=FINGER3; puck++)
-			hand->setProperty(puck, M, 200000);
-		hand->setProperty(SPREAD, HOLD, 1);
-		hand->setProperty(SPREAD, M, 0);
-
-	/** Wait until the fingers has stopped due to HSG mechanism.  */
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			waitDoneMoving(puck);
-		}
-	/** After the fingers has stopped moving set HSG to 10000. A special
-		value that disables the safety features. See report of
-		the thesis. */
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			hand->setProperty(puck, HSG, 10000);
-			hand->setProperty(puck, LSG, 0);
-			hand->setProperty(puck, MODE, MODE_IDLE);	
-		}		
-
-		flag = false;
-		int pos[3];
-		for (int puck=FINGER1; puck<=FINGER3; puck++)
-			hand->getProperty(puck, P, &pos[puck-FINGER1]);
-
-	/** Grasp failed. Try again or return. */
-		if (pos[0] > 190000 && pos[1] > 190000 && pos[2] > 190000) {
-			cout << "I don't think I grabbed anything, should I try again? (y/n)" << endl;
-			cin >> response;
-			if (response == 'y') {
-				flag = true;
+				hand->setProperty(puck, HSG, HSG_value);
+				hand->setProperty(puck, CMD, CMD_OPEN);
 			}
-			else if (response == 'N')
-				flag = false;
-		}	
-	}
+			
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				waitDoneMoving(puck);
+			}
+		/** Start closing the fingers  */
+			for (int puck=FINGER1; puck<=FINGER3; puck++)
+				hand->setProperty(puck, M, 200000);
+			hand->setProperty(SPREAD, HOLD, 1);
+			hand->setProperty(SPREAD, M, 0);
+
+		/** Wait until the fingers has stopped due to HSG mechanism.  */
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				waitDoneMoving(puck);
+			}
+		/** After the fingers has stopped moving set HSG to 10000. A special
+			value that disables the safety features. See report of
+			the thesis. */
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, HSG, 5000);
+				hand->setProperty(puck, LSG, 0);
+				hand->setProperty(puck, MODE, MODE_IDLE);	
+			}		
+
+			flag = false;
+			int pos[3];
+			for (int puck=FINGER1; puck<=FINGER3; puck++)
+				hand->getProperty(puck, P, &pos[puck-FINGER1]);
+
+		/** Grasp failed. Try again or return. */
+			if (pos[0] > 190000 && pos[1] > 190000 && pos[2] > 190000) {
+				cout << "I don't think I grabbed anything, should I try again? (y/n)" << endl;
+				cin >> response;
+				if (response == 'y') {
+					flag = true;
+				}
+				else if (response == 'N')
+					flag = false;
+			}	
+		}
+	cout << "Grasp has been successfull. " << endl;
 }	
+
+void BAD::release(int topFinger)
+{
+	int init_position;
+	int position;
+	int sg[3];
+	int current_sg;
+	
+/** Read the initial SG and position of the top finger.  */
+	hand->getProperty(topFinger, SG, &sg[0]);
+	hand->getProperty(topFinger, P, &init_position);
+	
+	while(true) {
+	/** Read the current SG and position. If the current sg is much bigger
+		than ininial SG, it means someone is pulling the object and
+		you have to release it. The release is slow at first, and
+		quicker after. */
+		hand->getProperty(topFinger, SG, &current_sg);
+		hand->getProperty(topFinger, P, &position);		
+		if (current_sg - sg[0] > 200)
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, V, -20);
+				hand->setProperty(puck, TSTOP,0);
+				hand->setProperty(puck, MODE, MODE_VELOCITY);
+			}	
+		if ( (double)(init_position-position) / (double)(init_position) > 0.2 ) 
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, V, -60);
+				hand->setProperty(puck, TSTOP,0);
+				hand->setProperty(puck, MODE, MODE_VELOCITY);
+			}
+
+		if ( position < 40000 )
+			break;
+	}
+
+	for (int puck=FINGER1; puck<=FINGER3; puck++)
+		hand->setProperty(puck, MODE, MODE_IDLE);
+}
+
+void BAD::release2(int topFinger)
+{
+	int init_position;
+	int position;
+	int sg[3];
+	int current_sg[4];
+	int samples = 20;
+	int temp;
+	
+	hand->getProperty(topFinger, HSG, &temp);
+	cout << temp << endl;
+	
+	hand->getProperty(topFinger, SG, &sg[0]);
+	hand->getProperty(topFinger, P, &init_position);
+
+	bool flag = true;
+	int sg_diff[samples];
+	double var;
+	
+	while(true) {
+		for (int i=0; i<samples; i++) {
+			current_sg[0] = getSG(topFinger, false);
+			usleep(20*1000);
+			current_sg[3] = getSG(topFinger, false);
+			sg_diff[i] = current_sg[3] - current_sg[0];
+		}
+		//usleep(500*1000);
+		hand->getProperty(topFinger, SG, &current_sg[1]);
+		//usleep(500*1000);
+		hand->getProperty(topFinger, SG, &current_sg[2]);
+		
+		var = calculateVariance(sg_diff);
+		cout.precision(2);
+		
+		cout << "\rSG1: " << current_sg[0] << " " << current_sg[3] <<  " " << current_sg[1] <<  " " << current_sg[2] << " " << fixed << var << std::flush;
+		
+		
+			
+		
+		//if (current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 100 && current_sg[2] - current_sg[1] > 25 && current_sg[2] - current_sg[1] < 40) 
+		if (var > 80) {
+			usleep(1*1000*1000);
+		//if (flag  && current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 140)// && current_sg[1] - current_sg[0] < 500 && current_sg[2] - current_sg[1] > 40) 
+			
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, V, -20);
+				hand->setProperty(puck, TSTOP,0);
+				hand->setProperty(puck, MODE, MODE_VELOCITY);
+				flag = false;
+			}
+			break;
+			
+		}
+
+		else if (flag)
+			for (int puck=FINGER1; puck<=FINGER3; puck++)
+				hand->setProperty(puck, MODE, MODE_IDLE);
+		
+	}		
+		//if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 && current_sg[2] > current_sg[1] - 15 && current_sg[2] < current_sg[1] + 15) 
+		/*
+		if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 ) 
+			sg[0] = current_sg[0];
+//			cout << "1 " << endl;
+		
+		*/		
+	
+	
+	while(true) {
+		hand->getProperty(topFinger, P, &position);	
+		if ( (double)(init_position-position) / (double)(init_position) > 0.2 ) 
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, V, -60);
+				hand->setProperty(puck, TSTOP,0);
+				hand->setProperty(puck, MODE, MODE_VELOCITY);
+			}
+
+		if ( position < 40000 )
+			break;
+	}
+	
+	for (int puck=FINGER1; puck<=FINGER3; puck++)
+		hand->setProperty(puck, MODE, MODE_IDLE);
+}
 
 void BAD::holdGrasp(int force)
 {
@@ -358,149 +497,12 @@ void BAD::holdGrasp(int force)
 	}
 }
 
-
-void BAD::handover()
-{
-	simpleGrasp(2800);
-	release(FINGER1);
-	//release2(FINGER1);
-}
-
-
-void BAD::fetchAndRelease(int topFinger)
-{	
-
-	int rc;
-/** wait 1 second and check if hand is initialized */
-	usleep(1*1000000);
-    if (!hand->initiliazed)
-        hand->init();
-    else
-        open(HAND);
-    
-
-    
-    cout << msg_type << "I will close the fingers in order to grab the bottle." << endl;
-    
-/** Read SG absence of force, and set velocity of the fingers */
-	int sg[3];
-    for (int puck=FINGER1; puck<=FINGER3; puck++)
-        hand->getProperty(puck, SG, &sg[puck-FINGER1]);
-
-	usleep(500*1000);
-    for (int puck=FINGER1; puck<=FINGER3; puck++)
-        hand->setProperty(puck, V, 40);
-    
-    for (int puck=FINGER1; puck<=FINGER3; puck++) {
-        hand->setProperty(puck, TSTOP, 0);
-        hand->setProperty(puck, MODE, MODE_VELOCITY);
-    }
-
-
-/** Start grasping. When every fingers feels the object stop and hold the grasp */
-	bool flag[3] = {true, true, true};
-	int current_sg;
-	
-	while(flag[0] | flag[1] | flag[2]) {
-		for (int puck=FINGER1; puck<=FINGER3; puck++) {
-			hand->getProperty(puck, SG, &current_sg);
-			if (current_sg - sg[puck-FINGER1] > 500) {
-				hand->setProperty(puck, MODE, MODE_IDLE);
-				flag[puck-FINGER1] = false;
-			}
-		}
-
-	}
-
-	hand->setProperty(SPREAD, MODE, MODE_IDLE);
-
-	
-	cout << msg_type << "I grabbed the bottle. You can move the KUKA arm towards a person and the the person can receive the bottle" << endl;
-	
-/** Check if we have a force in the top finger and release the grasp */
-	int init_position;
-	int position;
-	
-
-	hand->getProperty(topFinger, SG, &sg[0]);
-	hand->getProperty(topFinger, P, &init_position);
-
-	
-	while(true) {
-		hand->getProperty(topFinger, SG, &current_sg);
-		hand->getProperty(topFinger, P, &position);		
-		if (current_sg - sg[0] > 150)
-			for (int puck=FINGER1; puck<=FINGER3; puck++) {
-				hand->setProperty(puck, V, -20);
-				hand->setProperty(puck, TSTOP,0);
-				hand->setProperty(puck, MODE, MODE_VELOCITY);
-			}	
-		if ( (double)(init_position-position) / (double)(init_position) > 0.2 ) 
-			for (int puck=FINGER1; puck<=FINGER3; puck++) {
-				hand->setProperty(puck, V, -60);
-				hand->setProperty(puck, TSTOP,0);
-				hand->setProperty(puck, MODE, MODE_VELOCITY);
-			}
-
-		if ( position < 40000 )
-			break;
-	}
-	
-
-	for (int puck=FINGER1; puck<=FINGER3; puck++)
-		hand->setProperty(puck, MODE, MODE_IDLE);
-
-	
-	cout << msg_type << "Always a pleasure!" << endl;
-	
-
-}
-
-// TODO: pretty crappy function. needs fixing
-void BAD::detectBreakaway(HandState* state)
-{	
-	//TODO the function must return even if no breakaway has happen
-	vector<vector<double> > joints;
-	joints.resize(3);	
-	for (int i = 0; i < 3; i++)
-    	joints[i].resize(3);
-    	
-    bool noBreak = true;
-	int brokenFinger = 0;
-	usleep(200*1000); // wait 200ms because in the beginning of the movement the secondary
-					  // encoder gives garbage
-	while(noBreak) {
-		state->update();
-		//state->printOut();
-		joints = state->getJointPos();
-		
-		
-		for (int finger = 0; finger < 3; finger++) {
-			//cout << "\033[1;31mDEBUG\033[0m " << (joints[finger][1])/(joints[finger][2]-40*(PI/180)) << endl;
-			if ( (joints[finger][1])/(joints[finger][2]-40*(PI/180)) < 2.8	 ) {
-				noBreak = false;
-				brokenFinger = finger + 11;
-			}
-		}
-	}
-	state->update();
-	cout << "\033[1;31mBREAK AWAY at finger\033[0m " << brokenFinger << endl;
-	//cout << "BREAK AWAY at finger " << brokenFinger << endl;
-	//state->printOut();
-	
-}
-
-
-/** handShake()
-*	Takes the strain as feedback and controls the velocity of the fingers.
-**/
 void BAD::handShake(HandState state)
 {
-		
 	struct timeval start, end;
-    double mtime, seconds, useconds;
-    seconds = 0;
-    gettimeofday(&start, NULL);
+	double mtime, seconds, useconds;
+	seconds = 0;
+	gettimeofday(&start, NULL);
 	
 	vector<double> init_strain;
 	init_strain.resize(3);
@@ -520,7 +522,7 @@ void BAD::handShake(HandState state)
     	pos[i].resize(3);
 	
 	cout << "[BAD] HandShake: Press ENTER when you wanna shake hands." << endl;
-    cin.ignore();
+	cin.ignore();
 	hand->setProperty(FINGER1, M, 145000);
 	hand->setProperty(FINGER2, M, 145000);
 	hand->setProperty(FINGER3, M, 145000);
@@ -531,7 +533,7 @@ void BAD::handShake(HandState state)
 	int velocity;
 	
 	gettimeofday(&start, NULL);
-	while(seconds < 10)
+	while(seconds < 5)
 	{
 		gettimeofday(&end, NULL);		
 		seconds  = end.tv_sec  - start.tv_sec;
@@ -563,12 +565,6 @@ void BAD::handShake(HandState state)
 	hand->setProperty(SPREAD, MODE, MODE_IDLE);
 	for (int finger=FINGER1; finger <= FINGER3; finger++) 
 		hand->setProperty(finger, MODE, MODE_IDLE);
-}
-
-void BAD::touchAndGrab(HandState state)
-{
-	goToRelaxedPos();
-
 }
 
 void BAD::precisionGrasp()
@@ -718,6 +714,137 @@ void BAD::distortionControl(double distortion)
 	}
 
     usleep(2*1000*1000);
+}
+
+/**TODOs and under development */
+
+void BAD::fetchAndRelease(int topFinger)
+{	
+
+	int rc;
+/** wait 1 second and check if hand is initialized */
+	usleep(1*1000000);
+    if (!hand->initiliazed)
+        hand->init();
+    else
+        open(HAND);
+    
+
+    
+    cout << msg_type << "I will close the fingers in order to grab the bottle." << endl;
+    
+/** Read SG absence of force, and set velocity of the fingers */
+	int sg[3];
+    for (int puck=FINGER1; puck<=FINGER3; puck++)
+        hand->getProperty(puck, SG, &sg[puck-FINGER1]);
+
+	usleep(500*1000);
+    for (int puck=FINGER1; puck<=FINGER3; puck++)
+        hand->setProperty(puck, V, 40);
+    
+    for (int puck=FINGER1; puck<=FINGER3; puck++) {
+        hand->setProperty(puck, TSTOP, 0);
+        hand->setProperty(puck, MODE, MODE_VELOCITY);
+    }
+
+
+/** Start grasping. When every fingers feels the object stop and hold the grasp */
+	bool flag[3] = {true, true, true};
+	int current_sg;
+	
+	while(flag[0] | flag[1] | flag[2]) {
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			hand->getProperty(puck, SG, &current_sg);
+			if (current_sg - sg[puck-FINGER1] > 500) {
+				hand->setProperty(puck, MODE, MODE_IDLE);
+				flag[puck-FINGER1] = false;
+			}
+		}
+
+	}
+
+	hand->setProperty(SPREAD, MODE, MODE_IDLE);
+
+	
+	cout << msg_type << "I grabbed the bottle. You can move the KUKA arm towards a person and the the person can receive the bottle" << endl;
+	
+/** Check if we have a force in the top finger and release the grasp */
+	int init_position;
+	int position;
+	
+
+	hand->getProperty(topFinger, SG, &sg[0]);
+	hand->getProperty(topFinger, P, &init_position);
+
+	
+	while(true) {
+		hand->getProperty(topFinger, SG, &current_sg);
+		hand->getProperty(topFinger, P, &position);		
+		if (current_sg - sg[0] > 150)
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, V, -20);
+				hand->setProperty(puck, TSTOP,0);
+				hand->setProperty(puck, MODE, MODE_VELOCITY);
+			}	
+		if ( (double)(init_position-position) / (double)(init_position) > 0.2 ) 
+			for (int puck=FINGER1; puck<=FINGER3; puck++) {
+				hand->setProperty(puck, V, -60);
+				hand->setProperty(puck, TSTOP,0);
+				hand->setProperty(puck, MODE, MODE_VELOCITY);
+			}
+
+		if ( position < 40000 )
+			break;
+	}
+	
+
+	for (int puck=FINGER1; puck<=FINGER3; puck++)
+		hand->setProperty(puck, MODE, MODE_IDLE);
+
+	
+	cout << msg_type << "Always a pleasure!" << endl;
+	
+
+}
+
+// TODO: pretty crappy function. needs fixing
+void BAD::detectBreakaway(HandState* state)
+{	
+	//TODO the function must return even if no breakaway has happen
+	vector<vector<double> > joints;
+	joints.resize(3);	
+	for (int i = 0; i < 3; i++)
+    	joints[i].resize(3);
+    	
+    bool noBreak = true;
+	int brokenFinger = 0;
+	usleep(200*1000); // wait 200ms because in the beginning of the movement the secondary
+					  // encoder gives garbage
+	while(noBreak) {
+		state->update();
+		//state->printOut();
+		joints = state->getJointPos();
+		
+		
+		for (int finger = 0; finger < 3; finger++) {
+			//cout << "\033[1;31mDEBUG\033[0m " << (joints[finger][1])/(joints[finger][2]-40*(PI/180)) << endl;
+			if ( (joints[finger][1])/(joints[finger][2]-40*(PI/180)) < 2.8	 ) {
+				noBreak = false;
+				brokenFinger = finger + 11;
+			}
+		}
+	}
+	state->update();
+	cout << "\033[1;31mBREAK AWAY at finger\033[0m " << brokenFinger << endl;
+	//cout << "BREAK AWAY at finger " << brokenFinger << endl;
+	//state->printOut();
+	
+}
+
+void BAD::touchAndGrab(HandState state)
+{
+	goToRelaxedPos();
+
 }
 
 void BAD::staple()
@@ -894,136 +1021,6 @@ void BAD::simpleCylinderGrasp()
 
     
 }
-
-void BAD::release(int topFinger)
-{
-	int init_position;
-	int position;
-	int sg[3];
-	int current_sg;
-	
-/** Read the initial SG and position of the top finger.  */
-	hand->getProperty(topFinger, SG, &sg[0]);
-	hand->getProperty(topFinger, P, &init_position);
-	
-	while(true) {
-	/** Read the current SG and position. If the current sg is much bigger
-		than ininial SG, it means someone is pulling the object and
-		you have to release it. The release is slow at first, and
-		quicker after. */
-		hand->getProperty(topFinger, SG, &current_sg);
-		hand->getProperty(topFinger, P, &position);		
-		if (current_sg - sg[0] > 150)
-			for (int puck=FINGER1; puck<=FINGER3; puck++) {
-				hand->setProperty(puck, V, -20);
-				hand->setProperty(puck, TSTOP,0);
-				hand->setProperty(puck, MODE, MODE_VELOCITY);
-			}	
-		if ( (double)(init_position-position) / (double)(init_position) > 0.2 ) 
-			for (int puck=FINGER1; puck<=FINGER3; puck++) {
-				hand->setProperty(puck, V, -60);
-				hand->setProperty(puck, TSTOP,0);
-				hand->setProperty(puck, MODE, MODE_VELOCITY);
-			}
-
-		if ( position < 40000 )
-			break;
-	}
-
-	for (int puck=FINGER1; puck<=FINGER3; puck++)
-		hand->setProperty(puck, MODE, MODE_IDLE);
-}
-
-void BAD::release2(int topFinger)
-{
-	int init_position;
-	int position;
-	int sg[3];
-	int current_sg[4];
-	int samples = 20;
-	
-	cout << "Ksekianw release2" << endl;
-	
-	int temp;
-	
-	hand->getProperty(topFinger, HSG, &temp);
-	cout << temp << endl;
-	
-	hand->getProperty(topFinger, SG, &sg[0]);
-	hand->getProperty(topFinger, P, &init_position);
-
-	bool flag = true;
-	int sg_diff[samples];
-	double var;
-	
-	while(true) {
-		for (int i=0; i<samples; i++) {
-			current_sg[0] = getSG(topFinger, false);
-			usleep(20*1000);
-			current_sg[3] = getSG(topFinger, false);
-			sg_diff[i] = current_sg[3] - current_sg[0];
-		}
-		//usleep(500*1000);
-		hand->getProperty(topFinger, SG, &current_sg[1]);
-		//usleep(500*1000);
-		hand->getProperty(topFinger, SG, &current_sg[2]);
-		
-		var = calculateVariance(sg_diff);
-		cout.precision(2);
-		
-		cout << "\rSG1: " << current_sg[0] << " " << current_sg[3] <<  " " << current_sg[1] <<  " " << current_sg[2] << " " << fixed << var << std::flush;
-		
-		
-			
-		
-		//if (current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 100 && current_sg[2] - current_sg[1] > 25 && current_sg[2] - current_sg[1] < 40) 
-		if (var > 60) {
-			usleep(1*1000*1000);
-		//if (flag  && current_sg[1] - current_sg[0] > 40 && current_sg[1] - current_sg[0] < 140)// && current_sg[1] - current_sg[0] < 500 && current_sg[2] - current_sg[1] > 40) 
-			cout << "\nKOMPLE " << endl;
-			
-			
-			for (int puck=FINGER1; puck<=FINGER3; puck++) {
-				hand->setProperty(puck, V, -20);
-				hand->setProperty(puck, TSTOP,0);
-				hand->setProperty(puck, MODE, MODE_VELOCITY);
-				flag = false;
-			}
-			break;
-			
-		}
-
-		else if (flag)
-			for (int puck=FINGER1; puck<=FINGER3; puck++)
-				hand->setProperty(puck, MODE, MODE_IDLE);
-		
-	}		
-		//if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 && current_sg[2] > current_sg[1] - 15 && current_sg[2] < current_sg[1] + 15) 
-		/*
-		if (current_sg[1] < current_sg[0] + 15 && current_sg[1] > current_sg[0] - 15 ) 
-			sg[0] = current_sg[0];
-//			cout << "1 " << endl;
-		
-		*/		
-	
-	
-	while(true) {
-		hand->getProperty(topFinger, P, &position);	
-		if ( (double)(init_position-position) / (double)(init_position) > 0.2 ) 
-			for (int puck=FINGER1; puck<=FINGER3; puck++) {
-				hand->setProperty(puck, V, -60);
-				hand->setProperty(puck, TSTOP,0);
-				hand->setProperty(puck, MODE, MODE_VELOCITY);
-			}
-
-		if ( position < 40000 )
-			break;
-	}
-	
-	for (int puck=FINGER1; puck<=FINGER3; puck++)
-		hand->setProperty(puck, MODE, MODE_IDLE);
-}
-
 
 void BAD::fetchAndRelease2(int topFinger)
 {	

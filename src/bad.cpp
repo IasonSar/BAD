@@ -48,25 +48,21 @@ int main(int argc, char* argv[])
 	
 /** Now you can write your own code using BAD API */	
 	
-	//bus.init();
 	driver.initHand();
-	//driver.initSG(false);
+//	driver.initSG(false);
 	
-	//hand.setProperty(FINGER1, M, 120000);
+//	driver.precisionGrasp();	
+//	driver.fetchAndRelease2(FINGER1);	
+//	driver.handShake(state);
+//	driver.distortionControl(1);
 	
-	//driver.logger();
-	//driver.precisionGrasp2();	
-	//driver.fetchAndRelease2(FINGER1);	
-	//driver.handShake(state);
-	//driver.distortionControl(1);
-	//driver.staple();
-	//driver.simpleCylinderGrasp();
-	//driver.syringe();
-	driver.simpleGrasp(2400);
-	driver.release(FINGER1);
-	//driver.release2(FINGER2);
+	//driver.simpleGrasp(2500);
+	//driver.release(FINGER1);
+	//driver.release2(FINGER1);
+	
 	//driver.holdGrasp(3100);
-	//driver.terminate();
+
+	driver.terminate();
 	
 	printf("[BAD] Shutting down...\n");	
 	return 0;

@@ -50,9 +50,9 @@ void *callLogger(void *object)
 	return NULL;
 }
 
-void *callFetchAndRelease(void *object)
+void *callHandover(void *object)
 {
-	((BAD *)object)->fetchAndRelease(FINGER1);
+	((BAD *)object)->handover();
 	return NULL;
 }
 
@@ -92,10 +92,8 @@ int main(int argc, char* argv[])
 	
 	struct arg_struct args;
 	args.object = &driver;
-	 args.myState = &state;
+	args.myState = &state;
 	args.myDouble = 1;
-
-	//driver.initHand();
 
 /** Start threads */
 	int i = 0;
@@ -104,33 +102,36 @@ int main(int argc, char* argv[])
 	
 	driver.initHand();
 
-	/*
-	rc = pthread_create(&threads[0], NULL, &callTest, &driver);
-	if (rc){
-		cout << "Error:unable to create thread," << rc << endl;
-		exit(-1);
-	}
-	*/
 	rc = pthread_create(&threads[0], NULL, &callLogger, &driver);
 	if (rc){
 		cout << "Error:unable to create thread," << rc << endl;
 		exit(-1);
 	}
 	
-	/*
-	rc = pthread_create(&threads[1], NULL, &callHandshake, (void*)&args);
-	if (rc){
-		cout << "Error:unable to create thread," << rc << endl;
-		exit(-1);
-	}
-	*/
+//	rc = pthread_create(&threads[1], NULL, &callHandshake, (void*)&args);
+//	if (rc){
+//		cout << "Error:unable to create thread," << rc << endl;
+//		exit(-1);
+//	}
+	
+//	rc = pthread_create(&threads[1], NULL, &callHandover, &driver);
+//	if (rc){
+//		cout << "Error:unable to create thread," << rc << endl;
+//		exit(-1);
+//	}
+
+//	rc = pthread_create(&threads[1], NULL, &callPrecisionGrasp, &driver);
+//	if (rc){
+//		cout << "Error:unable to create thread," << rc << endl;
+//		exit(-1);
+//	}
 	
 	rc = pthread_create(&threads[1], NULL, &callDistortionControl, (void*)&args);
 	if (rc){
 		cout << "Error:unable to create thread," << rc << endl;
 		exit(-1);
 	}
-	
+
 /** Wait the two threads to finish, before you finish main. */
 	rc = pthread_join(threads[0], &status);
 	rc = pthread_join(threads[1], &status);
