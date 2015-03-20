@@ -73,7 +73,7 @@ Compile the source code:
 make all
 ```
 
-This will create two executables: bad and bad_logger. With bad running the HighLevelBAD.h functions and bad_logger running two threads, one for a application function and one for the BAD::logger() function, which record data.
+This will create two executables: bad and bad_logger. With bad running the HighLevelBAD.h functions and bad_logger running two threads, one for a application function and one for the BAD::logger() function, which record data. Bear in mind that you must create a directory with the name 'log_files' in order the files to be stored.
 
 The user can extend the BAD API by adding functions in HighLevelBAD.h (implementations in HighLevelBAD.cpp) and then by call them in main() in bad.cpp. You can consult the already existing code of the API to learn how to use the functions.	
 
