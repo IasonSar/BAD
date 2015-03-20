@@ -3,7 +3,6 @@
 
 	Author: Iason Sarantopoulos
 	Institute: AUTh (Aristotle University of Thessaloniki)
-	Last update: 28/02/2015
 	
 	HighlevelBAD.cpp is part of BAD (Barretthand AUTh Driver). BAD is a 
 	basic driver to control a BarrettHand under Linux. This driver does not 

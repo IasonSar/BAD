@@ -3,11 +3,14 @@
 
 	Author: Iason Sarantopoulos
 	Institute: AUTh (Aristotle University of Thessaloniki)
-	Last update: 10/02/2015
-	
+	Last update: 20/03/2015
+		
 	bad.cpp is part of BAD (Barretthand AUTh Driver). BAD is a 
 	basic driver to control a BarrettHand under Linux. This driver does not 
 	provide real-time capabilities.
+	
+	Note that you can find the latest version of BAD in the following repo:
+	<https://github.com/iSaran/BAD>
 	
 	BAD is free software; you can redistribute it and/or modify
 	it under the terms of the GNU Lesser General Public License as published by
@@ -21,6 +24,7 @@
 
 	You should have received a copy of the GNU Lesser General Public License
  	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 */
 
 
