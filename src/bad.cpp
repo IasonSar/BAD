@@ -54,6 +54,8 @@ int main(int argc, char* argv[])
 	
 	driver.initHand();
 //	driver.initSG(false);
+
+	driver.handover();
 	
 //	driver.precisionGrasp();	
 //	driver.fetchAndRelease2(FINGER1);	
@@ -66,7 +68,7 @@ int main(int argc, char* argv[])
 	
 	//driver.holdGrasp(3100);
 
-	driver.terminate();
+//	driver.terminate();
 	
 	printf("[BAD] Shutting down...\n");	
 	return 0;

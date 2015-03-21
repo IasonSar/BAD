@@ -156,7 +156,7 @@ public:
 	* the hand will stop, considering that the grasp has been completed.
 	*/
 	void simpleGrasp(int);
-
+	void simpleGrasp2();
 	/**
 	* Function that hold the grasp implementing a position control.
 	* @param force An int that represents the SG value that the user

@@ -276,8 +276,8 @@ void BAD::logger()
 
 void BAD::handover()
 {
-	simpleGrasp(2200);
-	release2(FINGER1);
+	simpleGrasp2();
+	release(FINGER1);
 	//release2(FINGER1);
 }
 
@@ -532,7 +532,7 @@ void BAD::handShake(HandState state)
 	int velocity;
 	
 	gettimeofday(&start, NULL);
-	while(seconds < 5)
+	while(seconds < 10)
 	{
 		gettimeofday(&end, NULL);		
 		seconds  = end.tv_sec  - start.tv_sec;
@@ -713,6 +713,58 @@ void BAD::distortionControl(double distortion)
 	}
 
     usleep(2*1000*1000);
+}
+
+void BAD::simpleGrasp2()
+{
+
+
+	int rc;
+/** wait 1 second and check if hand is initialized */
+	usleep(1*1000000);
+    if (!hand->initiliazed)
+        hand->init();
+    else
+        open(HAND);
+    
+
+    
+    cout << msg_type << "I will close the fingers in order to grab the bottle." << endl;
+    
+/** Read SG absence of force, and set velocity of the fingers */
+	int sg[3];
+    for (int puck=FINGER1; puck<=FINGER3; puck++)
+        hand->getProperty(puck, SG, &sg[puck-FINGER1]);
+
+	usleep(500*1000);
+    for (int puck=FINGER1; puck<=FINGER3; puck++)
+        hand->setProperty(puck, V, 40);
+    
+    for (int puck=FINGER1; puck<=FINGER3; puck++) {
+        hand->setProperty(puck, TSTOP, 0);
+        hand->setProperty(puck, MODE, MODE_VELOCITY);
+    }
+
+
+/** Start grasping. When every fingers feels the object stop and hold the grasp */
+	bool flag[3] = {true, true, true};
+	int current_sg;
+	
+	while(flag[0] | flag[1] | flag[2]) {
+		for (int puck=FINGER1; puck<=FINGER3; puck++) {
+			hand->getProperty(puck, SG, &current_sg);
+			if (current_sg - sg[puck-FINGER1] > 500) {
+				hand->setProperty(puck, MODE, MODE_IDLE);
+				flag[puck-FINGER1] = false;
+			}
+		}
+
+	}
+
+	hand->setProperty(SPREAD, MODE, MODE_IDLE);
+
+	
+
 }
 
 /**TODOs and under development */
