@@ -17,7 +17,8 @@ Dependencies
 ## Installing Dependencies on Ubuntu Linux 12.04
 ### 1. Installing PCAN Linux Driver
 Download from [here](http://www.peak-system.com/fileadmin/media/linux/index.htm) the latest version of the driver.
-```Shell
+
+```bash
 $ sudo apt-get install libpopt-dev g++	#Install libpopt-dev, g++
 $ tar -xzf peak-linux-driver-7.XX.tar.gz	#Unpack driver
 $ cd peak-linux-driver-7.XX
@@ -39,13 +40,15 @@ You will se something like that:
 *n -type- ndev --base-- irq --btr- --read-- --write- --irqs-- -errors- status
 0    pci -NA- fa010000 018 0x001c 00000000 00000000 00000000 00000000 0x0000
 ```
+
 ### 2. Installing PCAN-Basic APIi
 
 You can download PCAN-basic from [Peak-Systems website](http://www.peak-system.com/produktcd/Develop/PC%20interfaces/Linux/PCAN-Basic_API_for_Linux/PCAN_Basic_Linux-2.0.3.tar.gz).
 
-```
+
 Then you may install PCAN-Basic:
-```
+
+```bash
 cd pcanbasic
 make
 sudo make install
@@ -53,7 +56,8 @@ sudo make install
 
 ## Compiling and using BAD
 Compile the source code:
-```
+
+```bash
 make all
 ```
 
