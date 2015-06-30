@@ -79,8 +79,8 @@ FILES1  = $(SRC)/$(TARGET1).cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC
 TARGET2 = bad_logger
 FILES2  = $(SRC)/$(TARGET2).cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC)/HighLevelBAD.cpp $(SRC)/kinematics.cpp
 
-TARGET3 = bad_test
-FILES3  = $(SRC)/$(TARGET1).cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC)/HighLevelBAD.cpp  $(SRC)/kinematics.cpp $(SRC)/extra_library.cpp $(SRC)/admittance.cpp
+TARGET3 = admittance 
+FILES3  = $(SRC)/admittance.cpp $(SRC)/CANbus.cpp  $(SRC)/BarrettHand.cpp  $(SRC)/HighLevelBAD.cpp  $(SRC)/kinematics.cpp $(SRC)/extra_library.cpp
 
 
 
@@ -94,7 +94,7 @@ $(TARGET2): $(FILES2)
 	g++ $(FILES2) $(CFLAGS) -o $(TARGET2) $(USERAPP_CFLAGS) $(USERAPP_LDFLAGS) $(USERAPP_LIBS) -D$(RT) 
 
 $(TARGET3): $(FILES3)
-	g++ $(FILES2) $(CFLAGS) -o $(TARGET2) $(USERAPP_CFLAGS) $(USERAPP_LDFLAGS) $(USERAPP_LIBS) -D$(RT) 
+	g++ $(FILES3) $(CFLAGS) -o $(TARGET3) $(USERAPP_CFLAGS) $(USERAPP_LDFLAGS) $(USERAPP_LIBS) -D$(RT) 
 
 clean:
 	rm -f $(SRC)/*~ $(SRC)/*.o *~ $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5)
