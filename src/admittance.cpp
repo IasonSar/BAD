@@ -4,13 +4,18 @@
 
 #include <boost/numeric/odeint.hpp>
 
+#include "HighLevelBAD.h"
+
+
 using namespace std;
 using namespace boost::numeric::odeint;
 
-const double M = 100;
-const double B = 1;
-const double K = 2;
-double SG = 2000;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+const double mass = 100;
+const double damping = 1;
+const double spring = 2;
+double sg_feedback = 2000;
 ofstream data;
 
 typedef boost::array< double, 2 > state_type;
@@ -18,7 +23,7 @@ typedef boost::array< double, 2 > state_type;
 void admittance(const state_type &x, state_type &dxdt, double t)
 {
 	dxdt[0] = x[1];
-	dxdt[1] = (SG - B*x[1] - K*x[0])/M;
+	dxdt[1] = (sg_feedback - damping*x[1] - spring*x[0])/mass;
 }
 
 void write_adm(const state_type &x, const double t)
@@ -28,6 +33,21 @@ void write_adm(const state_type &x, const double t)
 
 int main(int argc, char **argv)
 {
+
+	string hand_type = "BH8-282";
+			
+/* Create the CAN bus and the hand objects */
+	CANbus bus;
+	BHand hand(&bus, hand_type, &mutex);
+	HandState state(&hand);
+	BAD driver(&hand);
+	Kinematics kin;
+									
+/** Now you can write your own code using BAD API */	
+										
+	driver.initHand();
+
+
 
 	data.open("data.txt");
 
