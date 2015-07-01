@@ -12,9 +12,9 @@ using namespace boost::numeric::odeint;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-const double mass = 1;
+const double inertia = 1;
 const double damping = 1;
-const double spring = 1;
+const double stiffness = 0.001;
 double sg_feedback = 0;
 ofstream data;
 
@@ -24,7 +24,7 @@ state_type dstate;
 void admittance(const state_type &x, state_type &dxdt, double t)
 {
 	dxdt[0] = x[1];
-	dxdt[1] = (sg_feedback - damping*x[1] - spring*x[0])/mass;
+	dxdt[1] = (sg_feedback - damping*x[1] - stiffness*x[0])/inertia;
 }
 
 void write_adm(const state_type &x, const double t)
@@ -88,13 +88,15 @@ int main(int argc, char **argv)
 		if (time > T + 10) break;
 		if (time > t_thres) {
 			if (time < T) {
+
 				integrate(admittance, x_init, time_prev, time, 0.001, write_adm);
 				pos = x_ref + dstate[0];
+				cout << time << " " << x_init[0] << "," << x_init[1] << " " << time_prev << " " << time << pos << endl;
 				hand.setProperty(FINGER1, P, (int)pos);
 				x_init = dstate;
+				t_thres = t_thres+Ts;
 			}
 			
-			t_thres = t_thres+Ts;
 		}
 			 
 		time_prev = time;
