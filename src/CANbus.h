@@ -45,8 +45,8 @@
 
 #include <PCANBasic.h>
 
-#define PCAN_DEVICE	PCAN_PCIBUS1
-//#define PCAN_DEVICE	PCAN_USBBUS1
+//#define PCAN_DEVICE	PCAN_PCIBUS1
+#define PCAN_DEVICE	PCAN_USBBUS1
 
 
 
