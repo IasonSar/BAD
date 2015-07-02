@@ -13,8 +13,8 @@ configure_file (
 
 
 add_library(
-  CANbus $PROJECT_SOURCE_DIR/lib/CANbus.cpp
-  BHand $PROJECT_SOURCE_DIR/lib/BarrettHand.cpp  
+  CANbus ${PROJECT_SOURCE_DIR}/barrett_can/CANbus.cpp
+  BHand ${PROJECT_SOURCE_DIR}/barrett_can/BarrettHand.cpp  
 )
 
 include_directories(
@@ -23,7 +23,7 @@ include_directories(
 )
 
 add_subdirectory(
-  lib
+  barrett_can
 )
 
 
