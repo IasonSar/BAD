@@ -31,6 +31,7 @@
 
 //#include "kinematics.hh"
 #include "HighLevelBAD.h"
+#include "../include/badConfig.h"
 
 using namespace std;
 
@@ -40,6 +41,7 @@ int main(int argc, char* argv[])
 {
     string err_type = "[BAD] Error. ";
 	printf("[BAD] Starting...\n");
+	printf("[BAD] Version: \n");
 	
 	string hand_type = "BH8-282";
 	
