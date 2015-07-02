@@ -13,16 +13,21 @@ using namespace boost::numeric::odeint;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /** Define admittance parameters */
-const double inertia = 1;
-const double damping = 10;
-const double stiffness = 0.0001;
+double zeta = 1;
+double ts = 0.5;
+const double stiffness = 0.01;
+
+
+double wn = 4/ts;
+const double inertia = stiffness/(wn*wn);
+const double damping = inertia*2*wn;
 
 double sg_feedback = 0;
 ofstream data; //for writing data inside a file
 
 typedef boost::array< double, 2 > state_type;
 state_type dstate;
-
+runge_kutta4<state_type> stepper;
 
 /** Method that defines our admittance system */
 void admittance(const state_type &x, state_type &dxdt, double t)
@@ -54,15 +59,17 @@ int main(int argc, char **argv)
 									
 /** Init the hand and move the finger 1 to an initial position.
 	Then wait for 2 sec. */										
+	
+	
 	driver.initHand();
-	hand.setProperty(FINGER1, M, 30000);
+	hand.setProperty(FINGER1, M, 50000);
 
 	usleep(2*1000*1000);
 
 /** Read current position (initial position) */
 	int x_cur;
 	hand.getProperty(FINGER1, P, &x_cur);
-
+	
 /** 
 	t0: the initial time in sec
 	time: current time
@@ -70,7 +77,7 @@ int main(int argc, char **argv)
 	T: the total time running the controller 
 	t_thres: a threashold time to keep the control cycle fixed
 	Ts = the duration of the control cycle */
-	double t0 = 0, time = 0, time_prev = 0, T=50, t_thres=0, Ts = 0.05;
+	double t0 = 0, time = 0, time_prev = 0, T=50, t_thres=0, Ts = 0.008;
 
 /** Define structs and variables for measuring time. */
 	struct timeval start, end;
@@ -86,7 +93,7 @@ int main(int argc, char **argv)
 	hand.setProperty(FINGER1, MODE, MODE_PID);
 
 /* A nominal reference position x[0] = e = x_cur - x_ref **/
-	int x_ref = 100000;
+	int x_ref = x_cur;
 
 	state_type x_init = {(x_cur - x_ref), 0};
 
@@ -115,9 +122,10 @@ int main(int argc, char **argv)
 		if (time > t_thres) {
 			if (time < T) {
 
-				integrate(admittance, x_init, time_prev, time, 0.01, write_adm);
-				x_cur = x_ref + dstate[0];
-				cout << time << "\t" << sg_feedback << "\t" << x_init[0] << "," << x_init[1] << "\t" << time_prev << "," << time << "\t"<< x_cur << endl;
+				integrate_const(stepper, admittance, x_init, time_prev, time, 0.005, write_adm);
+				//integrate(admittance, x_init, time_prev, time, 0.01, write_adm);
+				x_cur = x_ref - dstate[0]; // minus for BHand
+				//cout << time << "\t" << sg_feedback << "\t" << x_init[0] << "," << x_init[1] << "\t" << time_prev << "," << time << "\t"<< x_cur << endl;
 				hand.setProperty(FINGER1, P, (int)x_cur);
 				x_init = dstate;
 				t_thres = t_thres+Ts;
