@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 {
     string err_type = "[BAD] Error. ";
 	printf("[BAD] Starting...\n");
-	printf("[BAD] Version: \n");
+	printf("[BAD] Version: %d.%d \n", bad_VERSION_MAJOR, bad_VERSION_MINOR);
 	
 	string hand_type = "BH8-282";
 	
