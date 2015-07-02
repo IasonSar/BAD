@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 	T: the total time running the controller 
 	t_thres: a threashold time to keep the control cycle fixed
 	Ts = the duration of the control cycle */
-	double t0 = 0, time = 0, time_prev = 0, T=50, t_thres=0, Ts = 0.008;
+	double t0 = 0, time = 0, time_prev = 0, T=110, t_thres=0, Ts = 0.008;
 
 /** Define structs and variables for measuring time. */
 	struct timeval start, end;
