@@ -40,4 +40,5 @@ add_dependencies( bad
 
 target_link_libraries( bad
   ${catkin_LIBRARIES}
+  ${CANBUS_LIBS}
 )
