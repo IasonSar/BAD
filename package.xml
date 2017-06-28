@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<package>
+  <name>bad</name>
+  <version>0.0.1</version>
+  <description>The bad library as a ROS package</description>
+  <maintainer email="iasons@auth.gr">Iason Sarantopoulos</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
