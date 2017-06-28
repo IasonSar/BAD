@@ -23,7 +23,7 @@
  	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "CANbus.h"
+#include <bad/CANbus.h>
 
 CANbus::CANbus() 
 { 

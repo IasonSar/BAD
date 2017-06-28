@@ -1,4 +1,4 @@
-#include "BarrettHandSim.h"
+#include <bad/BarrettHandSim.h>
 
 
 BHandSim::BHandSim(CANbus* myBus, string myType)

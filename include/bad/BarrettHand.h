@@ -24,8 +24,8 @@
 #ifndef __BARRETTHAND_HH_INCLUDED__
 #define __BARRETTHAND_HH_INCLUDED__
 
-#include "CANbus.h"
-#include "barrett_properties.h"
+#include <bad/CANbus.h>
+#include <bad/barrett_properties.h>
 
 using namespace std;
 

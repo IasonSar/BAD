@@ -23,7 +23,7 @@
  	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "BarrettHand.h"
+#include <bad/BarrettHand.h>
 
 BHand::BHand(CANbus* myBus, string myType, pthread_mutex_t* myMutex)
 {

@@ -23,7 +23,7 @@
 
 #include <cmath>
 #include <vector>
-#include "BarrettHand.h"
+#include <bad/BarrettHand.h>
 
 using namespace std;
 

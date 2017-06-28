@@ -21,8 +21,8 @@
  	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "BarrettHand.h"
-#include "kinematics.h"
+#include <bad/BarrettHand.h>
+#include <bad/kinematics.h>
 #include <omp.h> // for benchmarking and timing
 
 /**

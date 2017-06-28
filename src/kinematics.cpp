@@ -1,4 +1,4 @@
-#include "kinematics.h"
+#include <bad/kinematics.h>
 
 
 Kinematics::Kinematics()

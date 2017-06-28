@@ -1,5 +1,5 @@
-#include "CANbus.hh"
-#include "barrett_properties.hh"
+#include <bad/CANbus.h>
+#include <bad/barrett_properties.h>
 
 using namespace std;
 

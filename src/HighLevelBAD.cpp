@@ -23,7 +23,7 @@
 */
 
 
-#include "HighLevelBAD.h"
+#include <bad/HighLevelBAD.h>
 
 /******** BAD Functions ********/
 BAD::BAD(BHand* myHand)
